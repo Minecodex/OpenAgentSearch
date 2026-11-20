@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: EndpointProviderBinding
+type: object
+required: [kind, provider, adapter]
+oneOf:
+  - properties: {kind: {const: search}, provider: {const: browser}, adapter: {const: browser_search}}
+  - properties: {kind: {const: search}, provider: {enum: [tavily, anysearch, deepseek]}, adapter: {enum: [http_search, integrated_search]}}
+  - properties: {kind: {const: search}, provider: {const: searxng}, adapter: {const: http_search}}
+  - properties: {kind: {const: reader}, provider: {const: browser}, adapter: {const: browser_reader}}
+  - properties: {kind: {const: reader}, provider: {enum: [tavily, anysearch, crawl4ai, deepseek]}, adapter: {const: http_reader}}
+  - properties: {kind: {const: model}, provider: {const: openai_compatible}, adapter: {const: chat_model}}
+if: {properties: {provider: {const: searxng}}}
+else: {properties: {options: {not: {required: [engines]}}}}

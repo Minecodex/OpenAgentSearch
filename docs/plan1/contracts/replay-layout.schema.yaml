@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: ReplayLayout
+type: object
+description: 为一份归档 HTML 材料生成的静态预览。srcdoc 已净化，样式和可用资源均内嵌，只供隔离 iframe 显示。
+required: [material_id, state, srcdoc, missing_resource_count]
+properties:
+  material_id: {type: string, minLength: 1}
+  state: {enum: [complete, partial]}
+  srcdoc: {type: string, minLength: 1}
+  missing_resource_count: {type: integer, minimum: 0}
+  reason: {type: string, minLength: 1, description: 部分布局未能归档的原因。}
+  viewport:
+    type: object
+    description: 当时已知的浏览器视口，以 CSS 像素计。
+    required: [width, height]
+    properties:
+      width: {type: integer, minimum: 1}
+      height: {type: integer, minimum: 1}
+    additionalProperties: false
+if: {properties: {state: {const: complete}}}
+then: {properties: {missing_resource_count: {const: 0}}}
+else: {required: [reason]}
+additionalProperties: false

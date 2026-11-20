@@ -1,0 +1,68 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: EndpointCall
+type: object
+properties:
+  browser_job: {$ref: ./browser-job.schema.yaml}
+  call_id: {type: string, minLength: 1}
+  span_id: {type: [string, 'null']}
+  variant_id: {type: string, minLength: 1, description: 本次检索尝试所属的查询变体。}
+  score_batch_id: {type: string, minLength: 1, description: 本次评分尝试所属的逻辑批次，重试沿用同一 ID。}
+  project_id: {type: [string, 'null'], format: uuid}
+  endpoint_name: {type: [string, 'null']}
+  kind: {enum: [search, reader, model]}
+  language: {type: [string, 'null']}
+  started_at: {type: string, format: date-time}
+  finished_at: {type: string, format: date-time}
+  input_preview: {type: [string, 'null']}
+  evaluation: {enum: [complete, incomplete, unscored, no_candidates, received, missing, model]}
+  candidates: {type: [integer, 'null'], minimum: 0}
+  evaluated: {type: [integer, 'null'], minimum: 0}
+  relevant: {type: [integer, 'null'], minimum: 0}
+  retained_chars: {type: [integer, 'null'], minimum: 0}
+  request_id: {type: string, minLength: 1}
+  endpoint_id:
+    anyOf:
+    - {type: string, format: uuid}
+    - {type: 'null'}
+  endpoint_version:
+    anyOf:
+    - {type: integer, minimum: 0}
+    - {type: 'null'}
+  operation: {type: string, minLength: 1}
+  origin:
+    type: string
+    enum: [business, debug, endpoint_test, proxy_test]
+  queue_ms: {type: integer, minimum: 0}
+  execution_ms: {type: integer, minimum: 0}
+  sent: {type: boolean}
+  status: {type: string, minLength: 1}
+  reason:
+    description: 本次派发的选择原因。primary 表示项目首池，language 表示语言命中池，fallback 表示后续池，direct 表示直接指定接入点。
+    anyOf:
+    - {type: string}
+    - {type: 'null'}
+  pool_priority: {type: integer, minimum: 1, description: 本次派发所在的项目池序号，从 1 开始。}
+  endpoint_failure: {type: string, enum: [risk, unavailable], description: 接入点级风控或暂时不可用，仅在实际发生时记录。}
+  proxy_id:
+    anyOf:
+    - {type: string, format: uuid}
+    - {type: 'null'}
+  proxy_version:
+    anyOf:
+    - {type: integer, minimum: 0}
+    - {type: 'null'}
+required: [call_id, request_id, endpoint_id, endpoint_version, operation, origin, queue_ms, execution_ms,
+  sent, status, reason]
+additionalProperties: false
+allOf:
+- if: {required: [browser_job], properties: {browser_job: {required: [egress_mode], properties: {egress_mode: {const: default_network}}}}}
+  then: {properties: {proxy_id: {type: 'null'}, proxy_version: {type: 'null'}}}
+- if: {required: [browser_job]}
+  then: {required: [kind], properties: {kind: {enum: [search, reader]}}}
+- if: {required: [browser_job, kind], properties: {kind: {const: search}}}
+  then: {properties: {browser_job: {required: [google_probe, search_engine]}}}
+- if: {required: [kind], properties: {kind: {const: reader}}}
+  then:
+    properties:
+      browser_job:
+        not: {anyOf: [{required: [google_probe]}, {required: [search_engine]}]}

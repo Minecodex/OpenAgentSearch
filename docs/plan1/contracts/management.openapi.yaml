@@ -1,0 +1,1995 @@
+openapi: 3.1.0
+info: {title: OpenAgentSearch 管理与健康 API, version: 1.0.0-draft}
+paths:
+  /admin/v1/session:
+    post:
+      operationId: login
+      summary: 登录
+      security: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Login'}
+      responses:
+        '200':
+          description: 登录
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Session'}
+          headers:
+            Set-Cookie:
+              schema: {type: string}
+              description: 设置或清除 HttpOnly 管理会话。
+        default: {$ref: '#/components/responses/Failure'}
+    get:
+      operationId: getSession
+      summary: 恢复会话
+      security:
+      - AdminSession: []
+      responses:
+        '200':
+          description: 恢复会话
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Session'}
+        default: {$ref: '#/components/responses/Failure'}
+    delete:
+      operationId: logout
+      summary: 注销
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 注销
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {type: 'null'}
+          headers:
+            Set-Cookie:
+              schema: {type: string}
+              description: 设置或清除 HttpOnly 管理会话。
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/settings/retention:
+    get:
+      operationId: getHistoryRetention
+      summary: 查看全局历史保留设置
+      security: [{AdminSession: []}]
+      responses:
+        '200': {$ref: '#/components/responses/HistoryRetention'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: updateHistoryRetention
+      summary: 统一修改所有项目新记录的历史保留天数
+      security: [{AdminSession: [], Csrf: []}]
+      parameters: [{$ref: '#/components/parameters/SameOriginHeader'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RetentionWrite'}
+      responses:
+        '200': {$ref: '#/components/responses/HistoryRetention'}
+        '409': {$ref: '#/components/responses/Failure', description: expected_version 与当前设置版本不匹配。}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects:
+    get:
+      operationId: listProject
+      summary: 分页查询项目
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: 分页查询项目
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/ProjectView'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+    post:
+      operationId: createProject
+      summary: 创建项目
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProjectCreate'}
+      responses:
+        '201':
+          description: 创建项目
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProjectCreated'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects/{id}:
+    get:
+      operationId: getProject
+      summary: 读取项目
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      responses:
+        '200':
+          description: 读取项目
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProjectView'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: updateProject
+      summary: 更新项目
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProjectUpdate'}
+      responses:
+        '200':
+          description: 更新项目
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProjectView'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoints:
+    get:
+      operationId: listEndpoint
+      summary: 分页查询接入点
+      description: 包含两个稳定的 Firefox 系统能力及其就绪 Pod 数，项目引用能力 ID。
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: 分页查询接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/EndpointView'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+    post:
+      operationId: createEndpoint
+      summary: 创建接入点
+      description: 创建手工配置的原生服务或模型接入点。内置浏览器能力由系统提供。
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EndpointCreate'}
+      responses:
+        '201':
+          description: 创建接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/EndpointView'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoints/{id}:
+    get:
+      operationId: getEndpoint
+      summary: 读取接入点
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      responses:
+        '200':
+          description: 读取接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/EndpointView'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: updateEndpoint
+      summary: 更新接入点
+      description: 变更手工配置的接入点。内置 Firefox 执行成员由部署副本自动同步。
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EndpointUpdate'}
+      responses:
+        '200':
+          description: 更新接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/EndpointView'}
+        default: {$ref: '#/components/responses/Failure'}
+    delete:
+      operationId: deleteEndpoint
+      summary: 检查引用并归档接入点
+      description: 系统内置能力受保护；对其执行写入或归档返回 409。
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/ExpectedVersion'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 检查引用并归档接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Deleted'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoints/{id}/test:
+    post:
+      operationId: testEndpoint
+      summary: 测试已保存的接入点
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 测试已保存的接入点
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/TestResult'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/proxies:
+    get:
+      operationId: listProxy
+      summary: 分页查询VPN 代理
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: 分页查询VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/ProxyView'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+    post:
+      operationId: createProxy
+      summary: 创建VPN 代理
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProxyCreate'}
+      responses:
+        '201':
+          description: 创建VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProxyView'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/proxies/{id}:
+    get:
+      operationId: getProxy
+      summary: 读取VPN 代理
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      responses:
+        '200':
+          description: 读取VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProxyView'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: updateProxy
+      summary: 更新VPN 代理
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProxyUpdate'}
+      responses:
+        '200':
+          description: 更新VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/ProxyView'}
+        default: {$ref: '#/components/responses/Failure'}
+    delete:
+      operationId: deleteProxy
+      summary: 检查引用并归档VPN 代理
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/ExpectedVersion'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 检查引用并归档VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Deleted'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/proxies/{id}/test:
+    post:
+      operationId: testProxy
+      summary: 测试已保存的VPN 代理
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 测试已保存的VPN 代理
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/TestResult'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/proxy-pools:
+    get:
+      operationId: listPool
+      summary: 分页查询代理池
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      responses:
+        '200':
+          description: 分页查询代理池
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/PoolView'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+    post:
+      operationId: createPool
+      summary: 创建代理池
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PoolCreate'}
+      responses:
+        '201':
+          description: 创建代理池
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/PoolView'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/proxy-pools/{id}:
+    get:
+      operationId: getPool
+      summary: 读取代理池
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      responses:
+        '200':
+          description: 读取代理池
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/PoolView'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: updatePool
+      summary: 更新代理池
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PoolUpdate'}
+      responses:
+        '200':
+          description: 更新代理池
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/PoolView'}
+        default: {$ref: '#/components/responses/Failure'}
+    delete:
+      operationId: deletePool
+      summary: 检查引用并归档代理池
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/ExpectedVersion'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      responses:
+        '200':
+          description: 检查引用并归档代理池
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Deleted'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects/{id}/key:
+    post:
+      operationId: rotateProjectKey
+      summary: 轮换项目 Key
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Version'}
+      responses:
+        '200':
+          description: 轮换项目 Key
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/KeyUpdate'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/language-routes:
+    get:
+      operationId: getLanguageRoutes
+      summary: 读取语言优先映射
+      security:
+      - AdminSession: []
+      responses:
+        '200':
+          description: 读取语言优先映射
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/LanguageRoutes'}
+        default: {$ref: '#/components/responses/Failure'}
+    put:
+      operationId: putLanguageRoutes
+      summary: 替换语言优先映射
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LanguageWrite'}
+      responses:
+        '200':
+          description: 替换语言优先映射
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/LanguageRoutes'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects/{id}/debug/list:
+    post:
+      operationId: debugList
+      summary: 按项目调试 List
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: ./business.openapi.yaml#/components/schemas/ListInput}
+      responses:
+        '200':
+          description: 按项目调试 List
+          content:
+            application/json:
+              schema: {$ref: ./business.openapi.yaml#/components/schemas/ListResponse}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects/{id}/debug/content:
+    post:
+      operationId: debugContent
+      summary: 按项目调试 Content
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: ./business.openapi.yaml#/components/schemas/ContentInput}
+      responses:
+        '200':
+          description: 按项目调试 Content
+          content:
+            application/json:
+              schema: {$ref: ./business.openapi.yaml#/components/schemas/ContentResponse}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/projects/{id}/debug/summary:
+    post:
+      operationId: debugSummary
+      summary: 按项目调试 Summary
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - {$ref: '#/components/parameters/ConfigId'}
+      - {$ref: '#/components/parameters/SameOriginHeader'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: ./business.openapi.yaml#/components/schemas/SummaryInput}
+      responses:
+        '200':
+          description: 按项目调试 Summary
+          content:
+            application/json:
+              schema: {$ref: ./business.openapi.yaml#/components/schemas/SummaryResponse}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests:
+    get:
+      operationId: listRequests
+      summary: 查询请求记录
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/From'}
+      - {$ref: '#/components/parameters/To'}
+      - {$ref: '#/components/parameters/ProjectId'}
+      - {$ref: '#/components/parameters/CallOrigin'}
+      - {$ref: '#/components/parameters/Operation'}
+      - {$ref: '#/components/parameters/Status'}
+      - {$ref: '#/components/parameters/Q'}
+      responses:
+        '200':
+          description: 查询请求记录
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/RequestRecord'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/aggregates:
+    get:
+      operationId: aggregateRequests
+      summary: 全窗请求汇总
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/From'}
+      - {$ref: '#/components/parameters/To'}
+      - {$ref: '#/components/parameters/ProjectId'}
+      - {$ref: '#/components/parameters/CallOrigin'}
+      - {$ref: '#/components/parameters/Operation'}
+      - {$ref: '#/components/parameters/Status'}
+      - {$ref: '#/components/parameters/Q'}
+      responses:
+        '200':
+          description: 全窗请求汇总
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Aggregates'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/{id}:
+    get:
+      operationId: getRequestDetail
+      summary: 请求概况
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      responses:
+        '200':
+          description: 请求概况
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/RequestDetail'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/{id}/evidence:
+    get:
+      operationId: getEvidence
+      summary: 请求来源与分段
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      responses:
+        '200':
+          description: 请求来源与分段
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Evidence'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/{id}/spans/{span_id}:
+    get:
+      operationId: getSpanDetail
+      summary: 请求单步载荷
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      - in: path
+        name: span_id
+        required: true
+        schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: 请求单步载荷
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/SpanDetail'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/{id}/replay/{material_id}/layout:
+    get:
+      operationId: getReplayLayout
+      summary: 读取单份归档网页的静态布局
+      description: 校验管理会话、请求归属、材料归属及保留期。父页按需取得 JSON，以隔离 iframe 显示其中的 srcdoc。
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      - {in: path, name: material_id, required: true, schema: {type: string, minLength: 1}}
+      responses:
+        '200':
+          description: 归档的静态布局，包含可用的样式和资源。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties: {data: {$ref: ./replay-layout.schema.yaml}}
+        '404': {$ref: '#/components/responses/Failure', description: 请求或材料不可见，或该材料没有可读布局。}
+        '410': {$ref: '#/components/responses/Failure', description: 已核验归属并确认请求及布局均已达到创建时固定的到期时刻。}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/requests/{id}/export:
+    get:
+      operationId: getExport
+      summary: 请求脱敏导出
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      responses:
+        '200':
+          description: 请求脱敏导出
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Export'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoint-calls:
+    get:
+      operationId: listCalls
+      summary: 查询上游尝试
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/Limit'}
+      - {$ref: '#/components/parameters/Cursor'}
+      - {$ref: '#/components/parameters/From'}
+      - {$ref: '#/components/parameters/To'}
+      - {$ref: '#/components/parameters/ProjectId'}
+      - {$ref: '#/components/parameters/Capability'}
+      - {$ref: '#/components/parameters/BusinessLanguage'}
+      - {$ref: '#/components/parameters/CallStatus'}
+      - {$ref: '#/components/parameters/Evaluation'}
+      - {$ref: '#/components/parameters/Q'}
+      - {$ref: '#/components/parameters/Operation'}
+      - {$ref: '#/components/parameters/CallOrigin'}
+      - {$ref: '#/components/parameters/EndpointId'}
+      responses:
+        '200':
+          description: 查询上游尝试
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items: {$ref: '#/components/schemas/Call'}
+                          minItems: 0
+                        next_cursor:
+                          anyOf:
+                          - {type: string, minLength: 1}
+                          - {type: 'null'}
+                      required: [items, next_cursor]
+                      additionalProperties: false
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoint-calls/{id}:
+    get:
+      operationId: getCall
+      summary: 调用详情
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/RecordId'}
+      responses:
+        '200':
+          description: 调用详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Call'}
+        default: {$ref: '#/components/responses/Failure'}
+  /admin/v1/endpoint-statistics:
+    get:
+      operationId: getStatistics
+      summary: 按窗口聚合
+      security:
+      - AdminSession: []
+      parameters:
+      - {$ref: '#/components/parameters/From'}
+      - {$ref: '#/components/parameters/To'}
+      - {$ref: '#/components/parameters/ProjectId'}
+      - {$ref: '#/components/parameters/Capability'}
+      - {$ref: '#/components/parameters/BusinessLanguage'}
+      - {$ref: '#/components/parameters/Operation'}
+      - {$ref: '#/components/parameters/CallOrigin'}
+      - {$ref: '#/components/parameters/EndpointId'}
+      - in: query
+        name: timezone
+        schema: {type: string}
+        required: false
+      - in: query
+        name: granularity
+        schema:
+          type: string
+          enum: [hour, day, week, month]
+        required: false
+      responses:
+        '200':
+          description: 按窗口聚合
+          content:
+            application/json:
+              schema:
+                allOf:
+                - {$ref: '#/components/schemas/AdminEnvelope'}
+                - properties:
+                    data: {$ref: '#/components/schemas/Statistics'}
+        default: {$ref: '#/components/responses/Failure'}
+  /health/live:
+    get:
+      operationId: healthLive
+      summary: Live
+      security: []
+      responses:
+        '200':
+          description: 探针状态
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Live'}
+  /health/ready:
+    get:
+      operationId: healthReady
+      summary: Ready
+      security: []
+      responses:
+        '200':
+          description: 探针状态
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Ready'}
+        '503':
+          description: 尚未就绪
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Ready'}
+components:
+  securitySchemes:
+    AdminSession: {type: apiKey, in: cookie, name: oas_admin_session}
+    Csrf: {type: apiKey, in: header, name: X-CSRF-Token}
+  responses:
+    HistoryRetention:
+      description: 全局唯一的保留设置，应用于随后新建的请求、所属材料及统计贡献，既有记录按创建时固定的到期时间处理。
+      content:
+        application/json:
+          schema:
+            allOf:
+            - {$ref: '#/components/schemas/AdminEnvelope'}
+            - properties: {data: {$ref: '#/components/schemas/RetentionView'}}
+    Failure:
+      description: 分类错误及本地化文案。
+      content:
+        application/json:
+          schema: {$ref: ./business.openapi.yaml#/components/schemas/Failure}
+  schemas:
+    RetentionView:
+      type: object
+      required: [retention_days, version]
+      properties: {retention_days: {type: integer, minimum: 1, default: 7}, version: {type: integer, minimum: 1}}
+      additionalProperties: false
+    RetentionWrite:
+      type: object
+      required: [retention_days, expected_version]
+      properties: {retention_days: {type: integer, minimum: 1}, expected_version: {type: integer, minimum: 1}}
+      additionalProperties: false
+    Login:
+      type: object
+      properties:
+        username: {type: string, minLength: 1}
+        password: {type: string, minLength: 1}
+      required: [username, password]
+      additionalProperties: false
+    Session:
+      type: object
+      properties:
+        username: {type: string, minLength: 1}
+        expires_at: {type: string, format: date-time}
+        csrf_token: {type: string, minLength: 1}
+      required: [username, expires_at, csrf_token]
+      additionalProperties: false
+    Version:
+      type: object
+      properties:
+        expected_version: {type: integer, minimum: 1}
+      required: [expected_version]
+      additionalProperties: false
+    KeyUpdate:
+      type: object
+      properties:
+        api_key: {type: string, minLength: 1}
+        version: {type: integer, minimum: 1}
+      required: [api_key, version]
+      additionalProperties: false
+    Deleted:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+      required: [id]
+      additionalProperties: false
+    TestResult:
+      type: object
+      properties:
+        resource_version: {type: integer, minimum: 1}
+        trace_request_id: {type: string, minLength: 1, description: 关联的管理测试记录 ID。}
+        status:
+          type: string
+          enum: [success, error]
+        tested_at: {type: string, format: date-time}
+        elapsed_ms: {type: integer, minimum: 0}
+        reason:
+          anyOf:
+          - {type: string}
+          - {type: 'null'}
+      required: [resource_version, status, tested_at, elapsed_ms, reason]
+      additionalProperties: false
+    ProxyCreate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        scheme:
+          type: string
+          enum: [socks5, https]
+        host: {type: string, minLength: 1}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        auth_mode:
+          type: string
+          enum: [none, password]
+        max_concurrency: {type: integer, minimum: 1}
+        enabled: {type: boolean}
+        secret:
+          type: object
+          properties:
+            username: {type: string, minLength: 1}
+            password: {type: string, minLength: 1}
+          required: [username, password]
+          additionalProperties: false
+      required: [name, scheme, host, port, auth_mode, max_concurrency, enabled]
+      additionalProperties: false
+      if:
+        properties:
+          auth_mode: {const: password}
+      then:
+        required: [secret]
+      else:
+        not:
+          required: [secret]
+    ProxyUpdate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        scheme:
+          type: string
+          enum: [socks5, https]
+        host: {type: string, minLength: 1}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        auth_mode:
+          type: string
+          enum: [none, password]
+        max_concurrency: {type: integer, minimum: 1}
+        enabled: {type: boolean}
+        expected_version: {type: integer, minimum: 1}
+        secret_action:
+          type: string
+          enum: [keep, replace, clear]
+        secret:
+          type: object
+          properties:
+            username: {type: string, minLength: 1}
+            password: {type: string, minLength: 1}
+          required: [username, password]
+          additionalProperties: false
+      required: [name, scheme, host, port, auth_mode, max_concurrency, enabled, expected_version, secret_action]
+      additionalProperties: false
+      allOf:
+      - if:
+          properties:
+            secret_action: {const: replace}
+        then:
+          required: [secret]
+        else:
+          not:
+            required: [secret]
+      - if:
+          properties:
+            auth_mode: {const: password}
+        then:
+          properties:
+            secret_action:
+              type: string
+              enum: [keep, replace]
+        else:
+          properties:
+            secret_action:
+              type: string
+              enum: [keep, clear]
+    ProxyView:
+      type: object
+      properties:
+        google_probe: {$ref: ./google-reachability.schema.yaml}
+        name: {type: string, minLength: 1}
+        scheme:
+          type: string
+          enum: [socks5, https]
+        host: {type: string, minLength: 1}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        auth_mode:
+          type: string
+          enum: [none, password]
+        max_concurrency: {type: integer, minimum: 1}
+        enabled: {type: boolean}
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        has_secret: {type: boolean}
+        health:
+          type: string
+          enum: [unknown, healthy, cooling, probing]
+        active_leases: {type: integer, minimum: 0}
+        last_test:
+          anyOf:
+          - {$ref: '#/components/schemas/TestResult'}
+          - {type: 'null'}
+      required: [name, scheme, host, port, auth_mode, max_concurrency, enabled, id, version, has_secret, health,
+        active_leases, last_test, google_probe]
+      additionalProperties: false
+    PoolCreate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              proxy_id: {type: string, format: uuid}
+              weight: {type: integer, minimum: 1, maximum: 100}
+            required: [proxy_id, weight]
+            additionalProperties: false
+          minItems: 0
+          maxItems: 100
+      required: [name, members]
+      additionalProperties: false
+    PoolUpdate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              proxy_id: {type: string, format: uuid}
+              weight: {type: integer, minimum: 1, maximum: 100}
+            required: [proxy_id, weight]
+            additionalProperties: false
+          minItems: 0
+          maxItems: 100
+        expected_version: {type: integer, minimum: 1}
+      required: [name, members, expected_version]
+      additionalProperties: false
+    PoolView:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              proxy_id: {type: string, format: uuid}
+              weight: {type: integer, minimum: 1, maximum: 100}
+            required: [proxy_id, weight]
+            additionalProperties: false
+          minItems: 0
+          maxItems: 100
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+      required: [name, members, id, version]
+      additionalProperties: false
+    EndpointProvider:
+      type: string
+      enum: [browser, tavily, searxng, anysearch, deepseek, crawl4ai, openai_compatible]
+    EndpointAdapterRules:
+      type: object
+      allOf:
+      - {$ref: ./endpoint-provider.schema.yaml}
+      - if: {properties: {kind: {const: search}}}
+        then: {properties: {adapter: {enum: [http_search, integrated_search, browser_search]}}}
+      - if: {properties: {kind: {const: reader}}}
+        then: {properties: {adapter: {enum: [http_reader, browser_reader]}}}
+      - if: {properties: {kind: {const: model}}}
+        then: {properties: {adapter: {const: chat_model}}}
+      - if: {properties: {adapter: {enum: [browser_search, browser_reader]}}}
+        then:
+          properties: {base_url: {type: 'null'}, secret_action: {const: keep}, has_secret: {const: false}}
+          not: {required: [secret]}
+        else:
+          required: [base_url]
+          properties: {base_url: {type: string, format: uri, pattern: '^https?://'}}
+      - if: {properties: {adapter: {const: chat_model}}}
+        then:
+          properties:
+            options:
+              type: object
+              properties:
+                model: {type: string, minLength: 1}
+                tokenizer: {type: string, minLength: 1}
+                max_input_tokens: {type: integer, minimum: 1}
+                max_output_tokens: {type: integer, minimum: 1}
+              required: [model, tokenizer, max_input_tokens, max_output_tokens]
+              additionalProperties: false
+      - if: {properties: {kind: {const: search}}}
+        then:
+          properties:
+            options:
+              type: object
+              properties:
+                engines: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                languages: {type: array, minItems: 1, uniqueItems: true, items: {type: string, minLength: 1}}
+                time_ranges: {type: array, uniqueItems: true, items: {enum: [day, month, year]}}
+              additionalProperties: false
+      - if: {properties: {adapter: {const: browser_search}}}
+        then: {properties: {options: {required: [languages, time_ranges], not: {required: [engines]}}}}
+      - if: {properties: {adapter: {const: integrated_search}}}
+        then: {properties: {options: {not: {required: [engines]}}}}
+      - if: {properties: {adapter: {const: browser_reader}}}
+        then: {properties: {options: {type: object, maxProperties: 0}}}
+      - if: {properties: {adapter: {const: http_reader}}}
+        then: {properties: {options: {type: object, properties: {format: {enum: [html, markdown], default: markdown}}, additionalProperties: false}}}
+    EndpointCreate:
+      type: object
+      not: {properties: {provider: {const: browser}}, required: [provider]}
+      properties:
+        name: {type: string, minLength: 1}
+        kind:
+          type: string
+          enum: [search, reader, model]
+        provider: {$ref: '#/components/schemas/EndpointProvider'}
+        adapter:
+          type: string
+          enum: [http_search, integrated_search, browser_search, http_reader, browser_reader, chat_model]
+        base_url:
+          anyOf:
+          - {type: string, format: uri}
+          - {type: 'null'}
+        timeout_ms: {type: integer, minimum: 1}
+        max_concurrency: {type: integer, minimum: 1}
+        rpm: {type: integer, minimum: 1}
+        options: {type: object, additionalProperties: true}
+        secret:
+          type: object
+          properties:
+            api_key: {type: string, minLength: 1}
+          required: [api_key]
+          additionalProperties: false
+      required: [name, kind, provider, adapter, timeout_ms, max_concurrency, rpm, options]
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/EndpointAdapterRules'
+    EndpointUpdate:
+      type: object
+      not: {properties: {provider: {const: browser}}, required: [provider]}
+      properties:
+        name: {type: string, minLength: 1}
+        kind:
+          type: string
+          enum: [search, reader, model]
+        provider: {$ref: '#/components/schemas/EndpointProvider'}
+        adapter:
+          type: string
+          enum: [http_search, integrated_search, browser_search, http_reader, browser_reader, chat_model]
+        base_url:
+          anyOf:
+          - {type: string, format: uri}
+          - {type: 'null'}
+        timeout_ms: {type: integer, minimum: 1}
+        max_concurrency: {type: integer, minimum: 1}
+        rpm: {type: integer, minimum: 1}
+        options: {type: object, additionalProperties: true}
+        expected_version: {type: integer, minimum: 1}
+        secret_action:
+          type: string
+          enum: [keep, replace, clear]
+        secret:
+          type: object
+          properties:
+            api_key: {type: string, minLength: 1}
+          required: [api_key]
+          additionalProperties: false
+      required: [name, kind, provider, adapter, timeout_ms, max_concurrency, rpm, options, expected_version, secret_action]
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/EndpointAdapterRules'
+      - if: {properties: {secret_action: {const: replace}}}
+        then: {required: [secret]}
+        else: {not: {required: [secret]}}
+    EndpointView:
+      type: object
+      properties:
+        managed_by: {enum: [system, helm, administrator], description: 内置 Firefox 能力、随 Helm 管理的可选组件或手工配置的原生接入点。}
+        availability: {enum: [available, no_ready_pods, component_disabled, component_unready], description: 部署可用性。调度器还要检查当前容量、接入点风控和内置搜索所选出口的首测结果。}
+        ready_pods: {type: integer, minimum: 0, description: 当前能承接该内置能力的就绪 Firefox Pod 数。为零时保留能力 ID。}
+        default_network_google_probe: {$ref: './google-reachability.schema.yaml#/$defs/sharedDefault', description: 所有 Firefox Pod 的默认网络共享的当前结果。}
+        name: {type: string, minLength: 1}
+        kind:
+          type: string
+          enum: [search, reader, model]
+        provider: {$ref: '#/components/schemas/EndpointProvider'}
+        adapter:
+          type: string
+          enum: [http_search, integrated_search, browser_search, http_reader, browser_reader, chat_model]
+        base_url:
+          anyOf:
+          - {type: string, format: uri}
+          - {type: 'null'}
+        timeout_ms: {type: integer, minimum: 1}
+        max_concurrency: {type: integer, minimum: 1}
+        rpm: {type: integer, minimum: 1}
+        options: {type: object, additionalProperties: true}
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        has_secret: {type: boolean}
+        last_test:
+          anyOf:
+          - {$ref: '#/components/schemas/TestResult'}
+          - {type: 'null'}
+      required: [name, kind, provider, adapter, timeout_ms, max_concurrency, rpm, options, id, version, has_secret, last_test, managed_by, availability]
+      additionalProperties: false
+      allOf:
+      - $ref: '#/components/schemas/EndpointAdapterRules'
+      - if: {properties: {provider: {const: browser}}}
+        then:
+          required: [ready_pods]
+          properties: {managed_by: {const: system}}
+          if: {properties: {ready_pods: {const: 0}}}
+          then: {properties: {availability: {const: no_ready_pods}}}
+          else: {properties: {availability: {const: available}}}
+        else: {not: {required: [ready_pods]}, properties: {managed_by: {enum: [helm, administrator]}, availability: {enum: [available, component_disabled, component_unready]}}}
+      - if: {properties: {managed_by: {const: helm}}}
+        then: {properties: {provider: {enum: [searxng, crawl4ai]}}}
+      - if: {properties: {adapter: {const: browser_search}}}
+        then: {required: [default_network_google_probe]}
+        else: {not: {required: [default_network_google_probe]}}
+      - if: {properties: {managed_by: {const: administrator}}}
+        then: {properties: {availability: {const: available}}}
+    BrowserProxyPoolRef:
+      description: 绑定的代理池 ID。为 null 时 Firefox 使用该 Pod 的默认网络。
+      anyOf: [{type: string, format: uuid}, {type: 'null'}]
+    ProjectCreate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        default_language: {type: string, minLength: 1}
+        languages:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+        search_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        reader_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        model_endpoint_id:
+          anyOf:
+          - {type: string, format: uuid}
+          - {type: 'null'}
+        browser_proxy_pool_id: {$ref: '#/components/schemas/BrowserProxyPoolRef'}
+        search_limit: {type: integer, minimum: 1, maximum: 10}
+        source_limit: {type: integer, minimum: 1, maximum: 10}
+        body_limit: {type: integer, minimum: 1}
+        summary_limit: {type: integer, minimum: 1}
+        rewrite_count: {type: integer, minimum: 0, maximum: 3}
+        allow_snippets: {type: boolean}
+      required: [name, default_language, languages, search_pools, reader_pools]
+      additionalProperties: false
+    ProjectUpdate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        default_language: {type: string, minLength: 1}
+        languages:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+        search_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        reader_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        model_endpoint_id:
+          anyOf:
+          - {type: string, format: uuid}
+          - {type: 'null'}
+        browser_proxy_pool_id: {$ref: '#/components/schemas/BrowserProxyPoolRef'}
+        search_limit: {type: integer, minimum: 1, maximum: 10}
+        source_limit: {type: integer, minimum: 1, maximum: 10}
+        body_limit: {type: integer, minimum: 1}
+        summary_limit: {type: integer, minimum: 1}
+        rewrite_count: {type: integer, minimum: 0, maximum: 3}
+        allow_snippets: {type: boolean}
+        expected_version: {type: integer, minimum: 1}
+      required: [name, default_language, languages, search_pools, reader_pools, model_endpoint_id, browser_proxy_pool_id,
+        search_limit, source_limit, body_limit, summary_limit, rewrite_count, allow_snippets, expected_version]
+      additionalProperties: false
+    ProjectView:
+      type: object
+      properties:
+        name: {type: string, minLength: 1}
+        default_language: {type: string, minLength: 1}
+        languages:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+        search_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        reader_pools:
+          type: array
+          items:
+            type: array
+            items: {type: string, format: uuid}
+            minItems: 1
+            maxItems: 100
+          minItems: 0
+          maxItems: 100
+        model_endpoint_id:
+          anyOf:
+          - {type: string, format: uuid}
+          - {type: 'null'}
+        browser_proxy_pool_id: {$ref: '#/components/schemas/BrowserProxyPoolRef'}
+        search_limit: {type: integer, minimum: 1, maximum: 10}
+        source_limit: {type: integer, minimum: 1, maximum: 10}
+        body_limit: {type: integer, minimum: 1}
+        summary_limit: {type: integer, minimum: 1}
+        rewrite_count: {type: integer, minimum: 0, maximum: 3}
+        allow_snippets: {type: boolean}
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+      required: [name, default_language, languages, search_pools, reader_pools, model_endpoint_id, browser_proxy_pool_id,
+        search_limit, source_limit, body_limit, summary_limit, rewrite_count, allow_snippets, id, version]
+      additionalProperties: false
+    ProjectCreated:
+      type: object
+      properties:
+        project: {$ref: '#/components/schemas/ProjectView'}
+        api_key: {type: string, minLength: 1}
+      required: [project, api_key]
+      additionalProperties: false
+    LanguageRoutes:
+      type: object
+      description: 按业务语言匹配项目内的搜索成员。首个命中池作为起始池，池内可用成员等权轮询，整池不可用时沿项目顺序向后尝试。
+      properties:
+        version: {type: integer, minimum: 0}
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              language: {type: string, minLength: 1}
+              endpoint_ids:
+                type: array
+                items: {type: string, format: uuid}
+                minItems: 1
+                uniqueItems: true
+            required: [language, endpoint_ids]
+            additionalProperties: false
+          minItems: 0
+      required: [version, entries]
+      additionalProperties: false
+    LanguageWrite:
+      type: object
+      description: 每种语言的 endpoint_ids 是集合。成员所在的项目池顺序决定起始池。
+      properties:
+        expected_version: {type: integer, minimum: 0}
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              language: {type: string, minLength: 1}
+              endpoint_ids:
+                type: array
+                items: {type: string, format: uuid}
+                minItems: 1
+                uniqueItems: true
+            required: [language, endpoint_ids]
+            additionalProperties: false
+          minItems: 0
+      required: [expected_version, entries]
+      additionalProperties: false
+    RequestRecord:
+      type: object
+      properties:
+        retention_days: {type: integer, minimum: 1, description: 创建记录时生效的全局保留天数。}
+        retention_version: {type: integer, minimum: 1, description: 创建记录时采用的全局保留设置版本。}
+        expires_at: {type: string, format: date-time, description: 由 UTC 开始时间和创建时保留天数计算的固定截止时刻。}
+        request_id: {type: string, minLength: 1}
+        project_id:
+          anyOf:
+          - {type: string, format: uuid}
+          - {type: 'null'}
+        operation: {type: string, minLength: 1}
+        status:
+          type: string
+          enum: [success, partial, empty, error, cancelled]
+        started_at: {type: string, format: date-time}
+        duration_ms: {type: integer, minimum: 0}
+        upstream_calls: {type: integer, minimum: 0}
+        model_calls: {type: integer, minimum: 0}
+        incomplete: {type: boolean}
+        origin: {enum: [business, debug, endpoint_test, proxy_test]}
+        project_name: {type: [string, 'null']}
+        language: {type: [string, 'null']}
+        query_preview: {type: [string, 'null']}
+        response_preview: {type: [string, 'null']}
+      required: [request_id, project_id, operation, status, started_at, retention_days, retention_version, expires_at, duration_ms, upstream_calls,
+        model_calls, incomplete, origin, project_name, language, query_preview, response_preview]
+      additionalProperties: false
+    Span:
+      type: object
+      properties:
+        span_id: {type: string, minLength: 1}
+        parent_id:
+          anyOf:
+          - {type: string, minLength: 1}
+          - {type: 'null'}
+        stage: {type: string, minLength: 1}
+        status: {type: string, minLength: 1}
+        start_offset_ms: {type: integer, minimum: 0}
+        duration_ms: {type: integer, minimum: 0}
+      required: [span_id, parent_id, stage, status, start_offset_ms, duration_ms]
+      additionalProperties: false
+    RequestDetail:
+      type: object
+      properties:
+        execution_summary: {$ref: ./request-execution.schema.yaml}
+        snapshot:
+          anyOf:
+          - {$ref: '#/components/schemas/TraceSnapshot'}
+          - {type: 'null'}
+        request_payload: {type: [object, 'null'], description: 授权范围内的脱敏输入。}
+        response_payload: {type: [object, 'null'], description: 授权范围内的业务或测试响应。}
+        metadata: {$ref: '#/components/schemas/RequestRecord'}
+        spans:
+          type: array
+          items: {$ref: '#/components/schemas/Span'}
+          minItems: 0
+        config_version:
+          anyOf:
+          - {type: integer, minimum: 0}
+          - {type: 'null'}
+        incomplete_reasons:
+          type: array
+          items: {type: string, minLength: 1}
+          minItems: 0
+      required: [metadata, execution_summary, spans, config_version, incomplete_reasons, snapshot, request_payload, response_payload]
+      additionalProperties: false
+    SpanDetail:
+      type: object
+      properties:
+        span: {$ref: '#/components/schemas/Span'}
+        input: {}
+        output: {}
+        diagnostics: {type: object, additionalProperties: true}
+        replay:
+          description: 按本阶段实际调用顺序返回获准查看的历史材料。没有相应调用时为空数组，缺失或过期的材料保留状态。
+          type: array
+          items: {$ref: '#/components/schemas/ReplayMaterial'}
+      required: [span, input, output, diagnostics, replay]
+      additionalProperties: false
+    ReplayMaterial: {$ref: ./replay-material.schema.yaml}
+    TraceSnapshot:
+      type: object
+      required: [project, routes_version, endpoints]
+      properties:
+        project: {$ref: '#/components/schemas/ProjectView'}
+        routes_version: {type: integer, minimum: 0}
+        endpoints:
+          type: array
+          items:
+            type: object
+            required: [id, name, version, kind, adapter, timeout_ms, max_concurrency, rpm]
+            properties:
+              id: {type: string, format: uuid}
+              name: {type: string}
+              version: {type: integer, minimum: 1}
+              kind: {enum: [search, reader, model]}
+              adapter: {type: string}
+              provider: {anyOf: [{$ref: '#/components/schemas/EndpointProvider'}, {type: 'null'}]}
+              timeout_ms: {type: integer, minimum: 1}
+              max_concurrency: {type: integer, minimum: 1}
+              rpm: {type: integer, minimum: 1}
+            additionalProperties: false
+      additionalProperties: false
+    TraceCandidate:
+      type: object
+      required: [candidate_id, url, title, hits, relevant, score, selected, source_id, material]
+      properties:
+        candidate_id: {type: string}
+        url: {type: string, format: uri}
+        title: {type: string}
+        snippet_preview: {type: [string, 'null']}
+        hits:
+          type: array
+          items:
+            type: object
+            required: [variant_id, call_id, url, rank]
+            properties:
+              variant_id: {type: string}
+              call_id: {type: string}
+              url: {type: string, format: uri}
+              rank: {type: integer, minimum: 1}
+            additionalProperties: false
+        relevant: {type: [boolean, 'null']}
+        score: {type: [integer, 'null'], minimum: 0, maximum: 100}
+        score_batch_id: {type: [string, 'null']}
+        score_call_id: {type: [string, 'null']}
+        selected: {type: [boolean, 'null']}
+        selection_reason: {type: [string, 'null']}
+        source_id: {type: [string, 'null']}
+        material: {enum: [reader_body, inline_body, snippet, null]}
+        reader_call_ids: {type: array, items: {type: string}}
+        article_preview: {type: [string, 'null']}
+        lengths:
+          type: object
+          properties:
+            text: {$ref: ./business.openapi.yaml#/components/schemas/Length}
+            markdown: {$ref: ./business.openapi.yaml#/components/schemas/Length}
+          required: [text, markdown]
+          additionalProperties: false
+      additionalProperties: false
+    Evidence:
+      type: object
+      properties:
+        variants:
+          type: array
+          items:
+            type: object
+            required: [variant_id, query]
+            properties: {variant_id: {type: string}, query: {type: [string, 'null']}}
+            additionalProperties: false
+        candidates: {type: array, items: {$ref: '#/components/schemas/TraceCandidate'}}
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              source_id: {type: string, minLength: 1}
+              url: {type: string, minLength: 1}
+              title: {type: string}
+              ranks:
+                type: array
+                items: {type: integer, minimum: 0}
+                minItems: 0
+              variant_ids:
+                type: array
+                items: {type: string, minLength: 1}
+                minItems: 0
+              score:
+                anyOf:
+                - {type: integer, minimum: 0, maximum: 100}
+                - {type: 'null'}
+            required: [source_id, url, title, ranks, variant_ids, score]
+            additionalProperties: false
+          minItems: 0
+        segments:
+          type: array
+          items:
+            type: object
+            properties:
+              source_id: {type: string, minLength: 1}
+              segment_id: {type: string, minLength: 1}
+              start_char: {type: integer, minimum: 0}
+              end_char: {type: integer, minimum: 0}
+              summary: {type: string}
+              cited: {type: boolean}
+              text_preview: {type: [string, 'null']}
+            required: [source_id, segment_id, start_char, end_char, summary, cited]
+            additionalProperties: false
+          minItems: 0
+      required: [variants, candidates, sources, segments]
+      additionalProperties: false
+    Export:
+      type: object
+      properties:
+        request: {$ref: '#/components/schemas/RequestDetail'}
+        calls: {type: array, items: {$ref: '#/components/schemas/Call'}}
+        evidence: {$ref: '#/components/schemas/Evidence'}
+        payloads:
+          type: array
+          items: {$ref: '#/components/schemas/SpanDetail'}
+          minItems: 0
+      required: [request, evidence, payloads, calls]
+      additionalProperties: false
+    Call: {$ref: ./endpoint-call.schema.yaml}
+    Aggregates:
+      type: object
+      properties:
+        from: {type: string, format: date-time}
+        to: {type: string, format: date-time}
+        requests: {type: integer, minimum: 0}
+        partial: {type: integer, minimum: 0}
+        errors: {type: integer, minimum: 0}
+        average_duration_ms:
+          anyOf:
+          - {type: number}
+          - {type: 'null'}
+        upstream_calls: {type: integer, minimum: 0}
+        model_calls: {type: integer, minimum: 0}
+      required: [from, to, requests, partial, errors, average_duration_ms, upstream_calls, model_calls]
+      additionalProperties: false
+    Metrics:
+      type: object
+      properties:
+        calls: {type: integer, minimum: 0}
+        successes: {type: integer, minimum: 0}
+        queue_ms: {type: integer, minimum: 0}
+        execution_ms: {type: integer, minimum: 0}
+        speed_samples: {type: integer, minimum: 0}
+        speed_ms: {type: integer, minimum: 0}
+        quality_numerator: {type: integer, minimum: 0}
+        quality_denominator: {type: integer, minimum: 0}
+        p95_ms:
+          anyOf:
+          - {type: number}
+          - {type: 'null'}
+      required: [calls, successes, queue_ms, execution_ms, speed_samples, speed_ms, quality_numerator, quality_denominator,
+        p95_ms]
+      additionalProperties: false
+    Statistics:
+      type: object
+      properties:
+        from: {type: string, format: date-time}
+        to: {type: string, format: date-time}
+        timezone: {type: string, minLength: 1}
+        overview: {$ref: '#/components/schemas/Metrics'}
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              from: {type: string, format: date-time}
+              to: {type: string, format: date-time}
+              metrics: {$ref: '#/components/schemas/Metrics'}
+            required: [from, to, metrics]
+            additionalProperties: false
+          minItems: 0
+        endpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint_id: {type: string, format: uuid}
+              version: {type: integer, minimum: 1}
+              metrics: {$ref: '#/components/schemas/Metrics'}
+            required: [endpoint_id, version, metrics]
+            additionalProperties: false
+          minItems: 0
+      required: [from, to, timezone, overview, series, endpoints]
+      additionalProperties: false
+    Live:
+      type: object
+      properties:
+        status: {const: ok}
+      required: [status]
+      additionalProperties: false
+    Ready:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        components:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [ok, disabled, degraded, unavailable]
+      required: [status, components]
+      additionalProperties: false
+    AdminEnvelope:
+      type: object
+      required: [request_id, status, data, warnings, error]
+      additionalProperties: false
+      properties:
+        request_id: {type: string, minLength: 1}
+        status: {const: success}
+        data: {}
+        warnings:
+          type: array
+          items: {$ref: ./business.openapi.yaml#/components/schemas/Message}
+        error: {type: 'null'}
+  parameters:
+    SameOriginHeader:
+      in: header
+      name: Origin
+      required: true
+      schema: {type: string, minLength: 1}
+    Limit:
+      in: query
+      name: limit
+      schema: {type: integer, minimum: 1, maximum: 100}
+      required: false
+    Cursor:
+      in: query
+      name: cursor
+      schema: {type: string}
+      required: false
+    ConfigId:
+      in: path
+      name: id
+      required: true
+      schema: {type: string, format: uuid}
+    ExpectedVersion:
+      in: query
+      name: expected_version
+      schema: {type: integer, minimum: 1}
+      required: true
+    From:
+      in: query
+      name: from
+      schema: {type: string, format: date-time}
+      required: false
+    To:
+      in: query
+      name: to
+      schema: {type: string, format: date-time}
+      required: false
+    ProjectId:
+      in: query
+      name: project_id
+      schema: {type: string, format: uuid}
+      required: false
+    Operation:
+      in: query
+      name: operation
+      schema: {type: string}
+      required: false
+    Status:
+      in: query
+      name: status
+      schema:
+        type: string
+        enum: [success, partial, empty, error, cancelled]
+      required: false
+    Q:
+      in: query
+      name: q
+      schema: {type: string}
+      required: false
+    RecordId:
+      in: path
+      name: id
+      required: true
+      schema: {type: string, minLength: 1}
+    CallOrigin:
+      in: query
+      name: origin
+      schema:
+        type: string
+        enum: [business, debug, endpoint_test, proxy_test]
+      required: false
+    Capability: {in: query, name: kind, schema: {enum: [search, reader, model]}}
+    BusinessLanguage: {in: query, name: language, schema: {type: string, minLength: 1}}
+    CallStatus: {in: query, name: status, schema: {enum: [success, empty, error, cancelled]}}
+    Evaluation: {in: query, name: evaluation, schema: {enum: [complete, incomplete, unscored, no_candidates, received, missing, model]}}
+    EndpointId:
+      in: query
+      name: endpoint_id
+      schema: {type: string, format: uuid}
+      required: false

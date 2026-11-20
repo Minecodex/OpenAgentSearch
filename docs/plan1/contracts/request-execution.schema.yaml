@@ -1,0 +1,49 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: RequestExecutionSummary
+description: 本次请求实际执行的检索、评分、材料与接入点摘要。
+type: object
+additionalProperties: false
+required: [retrieval, score_batches, answer_source, endpoints]
+properties:
+  retrieval:
+    description: 列表和总结按实际发出的变体计数，含原问题。其他操作为 null。单项未知为 null，确知无命中为 0。
+    type: [object, 'null']
+    additionalProperties: false
+    required: [variant_count, raw_candidates, unique_candidates]
+    properties:
+      variant_count: {$ref: '#/$defs/count'}
+      raw_candidates: {$ref: '#/$defs/count'}
+      unique_candidates: {$ref: '#/$defs/count'}
+  score_batches:
+    description: 按首次派发顺序列逻辑评分批次。同批重试只计一次。已知未评分的总结返回空数组，不适用或批次未知返回 null。
+    type: [array, 'null']
+    items:
+      type: object
+      additionalProperties: false
+      required: [batch_id, candidate_count]
+      properties:
+        batch_id: {type: string, minLength: 1}
+        candidate_count: {$ref: '#/$defs/count'}
+  answer_source:
+    description: 总结以最终引用的段判断正文、简介或混合。单 URL 正文用 body，成功的列表用 search_results。无结果用 none，测试或来源未知为 null。
+    enum: [body, snippet, mixed, search_results, none, null]
+  endpoints:
+    type: object
+    additionalProperties: false
+    required: [search, reader, model]
+    properties:
+      search: {$ref: '#/$defs/usedEndpoints'}
+      reader: {$ref: '#/$defs/usedEndpoints'}
+      model: {$ref: '#/$defs/usedEndpoints'}
+$defs:
+  count: {type: [integer, 'null'], minimum: 0}
+  usedEndpoints:
+    description: 仅含已发送的调用，按实际端点 ID 去重，保留首次派发顺序和当时名称。空数组表示未调用，null 表示调用归属缺失。
+    type: [array, 'null']
+    items:
+      type: object
+      additionalProperties: false
+      required: [endpoint_id, endpoint_name]
+      properties:
+        endpoint_id: {type: string, format: uuid}
+        endpoint_name: {type: [string, 'null']}

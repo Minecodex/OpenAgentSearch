@@ -1,0 +1,31 @@
+{
+  "name": "openagentsearch-interface-demos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/console.test.mjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@heroui/react": "3.2.7",
+    "@heroui/styles": "3.2.7",
+    "lucide-react": "1.76.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-aria": "3.53.1"
+  },
+  "devDependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@tailwindcss/cli": "4.3.5",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.65.1",
+    "tailwindcss": "4.3.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3",
+    "yaml": "2.8.1"
+  }
+}

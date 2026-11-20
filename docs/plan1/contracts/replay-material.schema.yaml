@@ -1,0 +1,36 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: ReplayMaterial
+type: object
+description: 同一请求内的执行快照，网页按实际取得的源格式保存，模型按实际发送与收到的 JSON 保存。认证信息在入库前剔除。
+required: [material_id, call_id, kind, state]
+properties:
+  material_id: {type: string, minLength: 1, description: 请求内稳定且唯一的材料标识，同一个 call_id 可对应多篇网页。}
+  call_id: {type: string, minLength: 1}
+  source_id: {type: string, minLength: 1, description: 已登记为本次请求来源时给出。}
+  kind: {enum: [webpage, model]}
+  state: {enum: [complete, incomplete, expired]}
+  reason: {type: string, minLength: 1}
+  url: {type: string, format: uri}
+  final_url: {type: string, format: uri}
+  media_type: {type: string, minLength: 1, description: 归档材料的媒体类型，类型和子类型统一使用小写。}
+  body: {type: string}
+  layout_state: {enum: [complete, partial, unavailable], description: HTML 布局快照状态，与原始材料的 state 分开。}
+  model_input: {type: object}
+  model_output: {type: object}
+allOf:
+- if: {properties: {kind: {const: webpage}}}
+  then: {not: {anyOf: [{required: [model_input]}, {required: [model_output]}]}}
+  else: {not: {anyOf: [{required: [url]}, {required: [final_url]}, {required: [media_type]}, {required: [body]}, {required: [layout_state]}]}}
+- if: {required: [layout_state]}
+  then: {required: [media_type], properties: {media_type: {pattern: '^(text/html|application/xhtml\+xml)(;|$)'}}}
+- if: {required: [media_type], properties: {kind: {const: webpage}, state: {enum: [complete, incomplete]}, media_type: {pattern: '^(text/html|application/xhtml\+xml)(;|$)'}}}
+  then: {required: [layout_state]}
+- if: {properties: {kind: {const: webpage}, state: {const: complete}}}
+  then: {required: [url, media_type, body]}
+- if: {properties: {kind: {const: model}, state: {const: complete}}}
+  then: {required: [model_input, model_output]}
+- if: {properties: {state: {enum: [incomplete, expired]}}}
+  then: {required: [reason]}
+- if: {properties: {state: {const: expired}}}
+  then: {not: {anyOf: [{required: [body]}, {required: [layout_state]}, {required: [model_input]}, {required: [model_output]}]}}
+additionalProperties: false

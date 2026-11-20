@@ -1,0 +1,133 @@
+/* Atlas gives the navigation and the data columns separate visual weights. */
+:root[data-skin='atlas'] {
+  --radius: 12px;
+  --diag-padding: 19px;
+}
+.skin-atlas .side {
+  background: color-mix(in srgb, var(--surface) 92%, var(--tint));
+  padding-inline: 16px;
+}
+.skin-atlas .side .nav-group > button {
+  padding-block: 10px;
+  font-size: 13.5px;
+}
+.skin-atlas .side .nav-group > button[aria-current='page'] {
+  box-shadow: inset 3px 0 var(--accent);
+  border-radius: 5px 8px 8px 5px;
+}
+.skin-atlas .page-head h1 {
+  font-size: clamp(30px, 2.5vw, 40px);
+  font-weight: 630;
+  letter-spacing: -0.045em;
+}
+.skin-atlas .metric-top {
+  font-size: 13px;
+}
+.skin-atlas .metric-note {
+  font-size: 11px;
+}
+.skin-atlas .metric > strong {
+  font-weight: 615;
+}
+.mix-list > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  width: 100%;
+  padding: 3px 0;
+  text-align: left;
+}
+.mix-list > button:hover {
+  color: var(--accent);
+}
+.mix-list > button > b {
+  margin-left: auto;
+  font: 11px var(--mono);
+}
+.mix-list > button > svg {
+  color: var(--faint);
+}
+.atlas-review {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+.atlas-review > div,
+.atlas-review > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.atlas-review > div {
+  margin-right: auto;
+  min-width: 0;
+}
+.atlas-review > div svg {
+  color: var(--accent);
+}
+.atlas-review > div b {
+  font-size: 13px;
+}
+.atlas-review > div span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.atlas-review > button {
+  border: 1px solid var(--line);
+  border-radius: var(--r-small);
+  background: var(--subtle);
+  padding: 4px 8px;
+  font-size: 11.5px;
+}
+.atlas-review > button strong {
+  font-family: var(--mono);
+}
+.skin-atlas .trend-panel.panel {
+  background: linear-gradient(112deg, #214c3c, #15392f 74%);
+  border-color: #24493a;
+}
+.skin-atlas .recent .row-link {
+  font-size: 13px;
+}
+.skin-atlas .recent .data-table td {
+  padding-block: 9px;
+}
+.scope-foot {
+  border-top: 1px solid var(--line);
+  margin-top: 15px;
+  padding-top: 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.scope-foot code {
+  font: 10px/1.6 var(--mono);
+}
+@media (max-width: 850px) {
+  .app-shell.skin-atlas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .atlas-review {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+  }
+  .atlas-review > div span {
+    display: none;
+  }
+  .atlas-review > button {
+    font-size: 10px;
+  }
+  .skin-atlas .page-overview .head-actions {
+    flex-wrap: wrap;
+  }
+}

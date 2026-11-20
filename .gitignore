@@ -1,0 +1,35 @@
+# Go build and test outputs
+/bin/
+/dist/
+node_modules/
+web/**/dist/
+web/**/coverage/
+web/**/playwright-report/
+web/**/test-results/
+artifacts/
+deploy/helm/**/charts/
+deploy/.cache/
+*.test
+*.out
+coverage.*
+
+# Python helper caches
+__pycache__/
+*.py[cod]
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# IDE and operating system files
+.DS_Store
+.idea/
+.vscode/
+build/otelcol/dist/
+build/otelcol/artifacts/
+/build/
+/.commandcode/
+/.claude/
+/.zcode/
+/.cache/

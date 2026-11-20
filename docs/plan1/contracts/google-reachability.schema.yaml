@@ -1,0 +1,19 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: GoogleReachability
+type: object
+description: 后台每 30 分钟检测一次。每条启用的 VPN 有独立样本，同一套部署的默认网络共用一份样本。时间为完成检测的 UTC 时刻。
+required: [reachable, checked_at]
+properties:
+  reachable: {type: [boolean, 'null'], description: true 可用 Google，false 已测不可达可用百度。null 表示待检测，暂不派发内置搜索。}
+  checked_at: {type: [string, 'null'], format: date-time}
+  probe_pod_uid: {type: string, minLength: 1, description: 产生这次已完成样本的 Pod UID。默认网络用它标识代表 Pod。}
+if: {properties: {reachable: {type: 'null'}}}
+then: {properties: {checked_at: {type: 'null'}}, not: {required: [probe_pod_uid]}}
+else: {properties: {checked_at: {type: string, format: date-time}}}
+additionalProperties: false
+$defs:
+  sharedDefault:
+    allOf:
+    - {$ref: '#'}
+    - if: {properties: {reachable: {type: boolean}}}
+      then: {required: [probe_pod_uid]}
