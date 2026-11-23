@@ -76,6 +76,17 @@ test('A23 current egress samples select the initial engine Google or Baidu, unkn
 });
 
 function worker(path,command){const key=process.env.OAS_TEST_WORKER_KEY;assert.ok(key);const output=docker('exec','-i',owned('OAS_TEST_BROWSER'),'curl','--silent','--show-error','--max-time','15','--write-out','\n%{http_code}','-H','Authorization: Bearer '+key,...(command?['-H','Content-Type: application/json','--data',JSON.stringify(command)]:[]),'http://127.0.0.1:8090'+path);const lines=output.split('\n');return {status:Number(lines.pop()),body:JSON.parse(lines.join('\n'))};}
+
+async function waitForScheduler(ready, message) {
+ const deadline = Date.now() + 15000;
+ do {
+  const {scheduler} = await admin('diagnostics');
+  if (ready(scheduler)) return;
+  await sleep(100);
+ } while (Date.now() < deadline);
+ assert.fail(message);
+}
+
 test('A11 late opens stay closed and stale owners cannot close another worker job and crash recovery eventually releases quarantined capacity',async()=>{
  const id=crypto.randomUUID(),request=crypto.randomUUID(),nextId=crypto.randomUUID();const cmd={job_id:id,request_id:request,owner:'first-owner',pod_uid:'local-worker',action:'open',deadline_ms:15000,count:0};
  const late={...cmd,job_id:crypto.randomUUID()};
@@ -85,8 +96,21 @@ test('A11 late opens stay closed and stale owners cannot close another worker jo
   assert.equal(worker('/internal/jobs',{...cmd,job_id:nextId,owner:'second-owner'}).status,200);check('A11.stale_owner',()=>assert.equal(worker('/internal/jobs',{...cmd,job_id:nextId,action:'close'}).status,409));assert.equal(worker('/health/ready').body.free_slots,3);
  }finally{worker('/internal/jobs',{...cmd,job_id:nextId,owner:'second-owner',action:'close'});}
  const made=await browserProject(),rid=crypto.randomUUID(),start=server.requests.length;const pending=fetch(base+'/v1/search/content',{method:'POST',headers:{Authorization:'Bearer '+made.api_key,'Content-Type':'application/json','X-Request-ID':rid},body:JSON.stringify({url:upstream+'/slow-article'})}).then(async r=>({status:r.status,body:await r.json()}));
- for(let n=0;n<150&&!server.requests.slice(start).some(r=>r.path==='/slow-article');n++)await sleep(40);assert.ok(server.requests.slice(start).some(r=>r.path==='/slow-article'),'the current job must reach its target before the worker crashes');docker('restart',owned('OAS_TEST_BROWSER'));const failed=await pending;check('A11.worker_crash',()=>assert.ok(failed.status>=400));await recorded(rid);
- for(let n=0;n<100;n++){const d=await admin('diagnostics');if(d.scheduler.ready_workers===1&&Object.values(d.scheduler.active_leases).every(n=>n===0))break;await sleep(100);}
+ for(let n=0;n<150&&!server.requests.slice(start).some(r=>r.path==='/slow-article');n++)await sleep(40);assert.ok(server.requests.slice(start).some(r=>r.path==='/slow-article'),'the current job must reach its target before the worker crashes');
+ const browserContainer = owned('OAS_TEST_BROWSER');
+ docker('kill', browserContainer);
+ try {
+  const failed = await pending;
+  check('A11.worker_crash', () => assert.ok(failed.status >= 400));
+  await recorded(rid);
+  await waitForScheduler(s => s.ready_workers === 0, 'discovery must remove the crashed worker');
+ } finally {
+  docker('start', browserContainer);
+ }
+ await waitForScheduler(
+  s => s.ready_workers === 1 && Object.values(s.active_leases).every(count => count === 0),
+  'discovery and cleanup must complete before the next browser request',
+ );
  assert.equal(worker('/health/ready').body.free_slots,4);const next=await business(made,'content',{url:upstream+'/article'});assert.ok(next.data.text);await recorded(next.request_id);
 });
 
