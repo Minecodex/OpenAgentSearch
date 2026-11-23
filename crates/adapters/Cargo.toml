@@ -2,6 +2,7 @@
 name = "oas-adapters"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 [features]
 database-tests=[]
 [dependencies]

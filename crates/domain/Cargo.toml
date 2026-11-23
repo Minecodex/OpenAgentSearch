@@ -2,6 +2,7 @@
 name = "oas-domain"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 [dependencies]
 icu_locale_core = { version = "2", features = ["alloc"] }
 serde.workspace = true

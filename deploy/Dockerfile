@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 FROM runtime-base AS api
 WORKDIR /app
 COPY --from=rust-build /output/oas-server /app/oas-server
+COPY LICENSE /usr/share/doc/openagentsearch/LICENSE
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 USER oas
 ENV OAS_WEB_DIR=/app/web OAS_BIND=0.0.0.0:8080
 EXPOSE 8080
@@ -29,6 +31,9 @@ ENTRYPOINT ["/app/oas-server"]
 FROM nginx:stable-alpine@sha256:caf4e1e032a20f9c3c5e28fc7f25ffd768ad8677b4975c54193075997b3a97e3 AS web
 COPY --from=web-build /src/web/dist /usr/share/nginx/html
 COPY deploy/nginx.conf /etc/nginx/templates/default.conf.template
+COPY LICENSE /usr/share/doc/openagentsearch/LICENSE
+COPY docs/plan1/demo/assets/THIRD_PARTY_NOTICES.txt /usr/share/nginx/html/THIRD_PARTY_NOTICES.txt
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 ENV OAS_API_HOST=oas-api OAS_API_PORT=8080
 EXPOSE 80
 
@@ -40,6 +45,8 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && mkdir -p /home/oas && chown oas /home/oas
 WORKDIR /app
 COPY --from=rust-build /output/oas-browser-worker /app/oas-browser-worker
+COPY LICENSE /usr/share/doc/openagentsearch/LICENSE
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 USER oas
 ENV OAS_WORKER_BIND=0.0.0.0:8090
 EXPOSE 8090

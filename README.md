@@ -3,6 +3,7 @@
 <div align="center">
 
 [![GitHub Release](https://img.shields.io/github/v/release/Minecodex/OpenAgentSearch?include_prereleases&label=Release)](https://github.com/Minecodex/OpenAgentSearch/releases)
+[![Apache License 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Rust](https://img.shields.io/badge/Rust-1.97-934b32)
 ![React](https://img.shields.io/badge/React-19-149eca)
 ![Helm](https://img.shields.io/badge/Kubernetes-Helm-326ce5)
@@ -139,3 +140,9 @@ Docker 端到端套件启动独立的 PostgreSQL、API、Web 和 Firefox，使�
 | 检索、评分和引用 | [搜索与内容流水线](docs/plan1/03-search-pipeline.md) |
 | 服务商、路由和浏览器 | [路由与接入点](docs/plan1/04-routing-and-providers.md) · [浏览器与代理池](docs/plan1/07-browser-proxies.md) |
 | 配置、请求历史与回放 | [控制面与存储](docs/plan1/05-control-and-storage.md) · [运行观测](docs/plan1/06-observability.md) · [管理 OpenAPI](docs/plan1/contracts/management.openapi.yaml) |
+
+## 开源协议
+
+OpenAgentSearch 采用 Apache License 2.0（`Apache-2.0`）。仓库、CLI 发行包、Helm Chart 和应用镜像均附带协议全文。[项目许可证](LICENSE)
+
+随附字体和前端组件保留各自的版权与许可声明。[第三方声明](docs/plan1/demo/assets/THIRD_PARTY_NOTICES.txt)

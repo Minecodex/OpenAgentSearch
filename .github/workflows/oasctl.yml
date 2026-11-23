@@ -50,9 +50,9 @@ jobs:
           mkdir release-assets
           archive="release-assets/oasctl-$tag-$PLATFORM"
           if [[ "$RUNNER_OS" == Windows ]]; then
-            python -m zipfile -c "$archive.zip" "target/release/$binary"
+            python -m zipfile -c "$archive.zip" "target/release/$binary" LICENSE
           else
-            tar -czf "$archive.tar.gz" -C target/release "$binary"
+            tar -czf "$archive.tar.gz" LICENSE -C target/release "$binary"
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
