@@ -1,0 +1,92 @@
+{{- range $name := list "searxng" "crawl4ai" }}
+{{- $config := index $.Values $name }}
+{{- $resolver := default dict $config.publicDns }}
+{{- $useResolver := and (eq $name "crawl4ai") $resolver.enabled }}
+{{- if $config.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  labels: {app.kubernetes.io/instance: {{ $.Release.Name }}}
+spec:
+  selector: {app: "{{ $.Release.Name }}-{{ $name }}"}
+  ports: [{port: {{ if eq $name "searxng" }}8080{{ else }}11235{{ end }}}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-{{ $name }}
+  labels: {app.kubernetes.io/instance: {{ $.Release.Name }}}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: "{{ $.Release.Name }}-{{ $name }}"}}
+  template:
+    metadata:
+      labels: {app: "{{ $.Release.Name }}-{{ $name }}"}
+      {{- if eq $name "searxng" }}
+      annotations: {checksum/settings: {{ toYaml $config.settings | sha256sum | quote }}}
+      {{- else if $useResolver }}
+      annotations: {checksum/dns: {{ toYaml $resolver | sha256sum | quote }}}
+      {{- end }}
+    spec:
+      enableServiceLinks: false
+      {{- if $useResolver }}
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [127.0.0.1]
+        searches: [{{ printf "%s.svc.%s" $.Release.Namespace $resolver.clusterDomain | quote }}, {{ printf "svc.%s" $resolver.clusterDomain | quote }}, {{ $resolver.clusterDomain | quote }}]
+        options: [{name: ndots, value: "1"}]
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: {{ $config.image }}
+          env:
+          {{- if eq $name "crawl4ai" }}
+            - name: CRAWL4AI_API_TOKEN
+              valueFrom: {secretKeyRef: {name: {{ default (printf "%s-credentials" $.Release.Name) $.Values.credentials.existingSecret }}, key: crawl4ai-key}}
+          {{- else }}
+            - name: SEARXNG_SECRET
+              valueFrom: {secretKeyRef: {name: {{ default (printf "%s-credentials" $.Release.Name) $.Values.credentials.existingSecret }}, key: searxng-key}}
+          {{- end }}
+          {{- with $config.extraEnv }}
+          {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if eq $name "searxng" }}
+          volumeMounts:
+            - {name: config, mountPath: /etc/searxng/settings.yml, subPath: settings.yml}
+          {{- end }}
+          ports: [{containerPort: {{ if eq $name "searxng" }}8080{{ else }}11235{{ end }}}]
+          readinessProbe:
+            tcpSocket: {port: {{ if eq $name "searxng" }}8080{{ else }}11235{{ end }}}
+        {{- if $useResolver }}
+        - name: public-dns
+          image: {{ $resolver.image | quote }}
+          args: ["-conf", "/etc/coredns/Corefile"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"], add: ["NET_BIND_SERVICE"]}
+          resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 64Mi}}
+          readinessProbe: {httpGet: {path: /ready, port: 8181}}
+          volumeMounts: [{name: dns, mountPath: /etc/coredns, readOnly: true}]
+      volumes: [{name: dns, configMap: {name: {{ $.Release.Name }}-crawl4ai-dns}}]
+        {{- end }}
+          {{- if eq $name "searxng" }}
+      volumes:
+        - name: config
+          configMap: {name: "{{ $.Release.Name }}-searxng"}
+          {{- end }}
+---
+{{- if eq $name "searxng" }}
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: "{{ $.Release.Name }}-searxng"}
+data:
+  settings.yml: |
+    {{- toYaml $.Values.searxng.settings | nindent 4 }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

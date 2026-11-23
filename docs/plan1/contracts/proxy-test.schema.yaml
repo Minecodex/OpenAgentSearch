@@ -1,0 +1,18 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: ProxyTestDiagnostics
+type: object
+required: [reachable, passed, proxy_healthy, expected_status, http_status, body_matches, failure_kind, total_ms, first_byte_ms, phases, checked_at, probe_pod_uid]
+properties:
+  reachable: {type: boolean, description: 已收到目标 HTTP 响应头且通过相应 TLS 校验，与是否符合预期响应分开。}
+  passed: {type: boolean, description: curl 正常完成，目标状态符合配置且可选正文标记匹配。}
+  proxy_healthy: {type: [boolean, 'null'], description: 有明确通道证据时给出代理自身健康；目标拒绝不等同代理故障。}
+  expected_status: {type: integer, minimum: 100, maximum: 599}
+  http_status: {type: [integer, 'null'], minimum: 100, maximum: 599}
+  body_matches: {type: [boolean, 'null'], description: 未配置正文标记时为 null，不返回标记文本或目标正文。}
+  failure_kind: {enum: [proxy_auth, proxy_tls, proxy_refused, proxy_dns, proxy_connect, proxy_protocol, target_connect, target_dns, target_tls, timeout, target_response, target_body, body_limit, response_incomplete, null]}
+  total_ms: {type: integer, minimum: 0}
+  first_byte_ms: {type: [integer, 'null'], minimum: 0}
+  phases: {type: array, items: {$ref: ./phase.schema.yaml}}
+  checked_at: {type: string, format: date-time}
+  probe_pod_uid: {type: string, minLength: 1}
+additionalProperties: false

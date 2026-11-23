@@ -1,0 +1,35 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: RequestAggregates
+type: object
+properties:
+  operations:
+    type: object
+    properties: {list: {type: integer, minimum: 0}, content: {type: integer, minimum: 0}, summary: {type: integer, minimum: 0}}
+    additionalProperties: false
+  series:
+    type: array
+    items:
+      type: object
+      required: [from, list, content, summary]
+      properties:
+        from: {type: string, format: date-time}
+        list: {type: integer, minimum: 0}
+        content: {type: integer, minimum: 0}
+        summary: {type: integer, minimum: 0}
+      additionalProperties: false
+  from: {type: string, format: date-time}
+  to: {type: string, format: date-time}
+  requests: {type: integer, minimum: 0}
+  completed: {type: integer, minimum: 0, description: 已进入终态的请求数。}
+  successful: {type: integer, minimum: 0, description: 返回 success、partial 或 empty 的已完成请求数。}
+  business_requests: {type: integer, minimum: 0, description: 当前筛选窗口内来源为 business 的请求数。}
+  partial: {type: integer, minimum: 0}
+  errors: {type: integer, minimum: 0}
+  average_duration_ms:
+    anyOf:
+    - {type: number}
+    - {type: 'null'}
+  upstream_calls: {type: integer, minimum: 0}
+  model_calls: {type: integer, minimum: 0}
+required: [from, to, requests, business_requests, completed, successful, partial, errors, average_duration_ms, upstream_calls, model_calls]
+additionalProperties: false

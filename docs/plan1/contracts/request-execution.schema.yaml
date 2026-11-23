@@ -6,12 +6,16 @@ additionalProperties: false
 required: [retrieval, score_batches, answer_source, endpoints]
 properties:
   retrieval:
-    description: 列表和总结按实际发出的变体计数，含原问题。其他操作为 null。单项未知为 null，确知无命中为 0。
+    description: 列表和总结按实际发出的查询变体计数，原问题仅在参与搜索时计入。其他操作为 null。单项未知为 null，确知无命中为 0。
     type: [object, 'null']
     additionalProperties: false
-    required: [variant_count, raw_candidates, unique_candidates]
+    required: [variant_count, raw_candidates, unique_candidates, completed_variants, incomplete_variants, known_raw_candidates, known_unique_candidates]
     properties:
       variant_count: {$ref: '#/$defs/count'}
+      completed_variants: {type: integer, minimum: 0}
+      incomplete_variants: {type: integer, minimum: 0}
+      known_raw_candidates: {type: integer, minimum: 0, description: 已完成分支的已知命中下界。}
+      known_unique_candidates: {type: integer, minimum: 0, description: 已完成分支的已知去重下界。}
       raw_candidates: {$ref: '#/$defs/count'}
       unique_candidates: {$ref: '#/$defs/count'}
   score_batches:

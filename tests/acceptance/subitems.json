@@ -1,0 +1,2282 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "A01.auth.content.en",
+      "description": "正文接口无效 Key 返回英文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.auth.content.zh",
+      "description": "正文接口无效 Key 返回中文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.auth.list.en",
+      "description": "列表接口无效 Key 返回英文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.auth.list.zh",
+      "description": "列表接口无效 Key 返回中文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.auth.summary.en",
+      "description": "总结接口无效 Key 返回英文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.auth.summary.zh",
+      "description": "总结接口无效 Key 返回中文错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.blank",
+      "description": "空白问题返回字段错误",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.duplicate.content",
+      "description": "正文拒绝重复 JSON 键",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.duplicate.list",
+      "description": "列表拒绝重复 JSON 键",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.duplicate.summary",
+      "description": "总结拒绝重复 JSON 键",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.integer",
+      "description": "整数字段拒绝小数表示",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.large.content",
+      "description": "正文在 JSON 解析前拒绝超量请求体",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.large.list",
+      "description": "列表在 JSON 解析前拒绝超量请求体",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.large.summary",
+      "description": "总结在 JSON 解析前拒绝超量请求体",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.only_three",
+      "description": "公开业务 OpenAPI 恰好三个操作",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.unknown.content",
+      "description": "正文拒绝未知字段",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.unknown.list",
+      "description": "列表拒绝未知字段",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A01.unknown.summary",
+      "description": "总结拒绝未知字段",
+      "area": "A01",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A02.admin_password_reset",
+      "description": "显式重置使旧密码及旧会话失效，已校验旧散列的并发登录也不能补发会话",
+      "area": "A02",
+      "required_suites": [
+        "database",
+        "docker"
+      ]
+    },
+    {
+      "id": "A02.concurrent_write",
+      "description": "同版本并发修改恰好一次成功、一次冲突",
+      "area": "A02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A02.immutable_snapshot",
+      "description": "在途请求继续使用冻结配置",
+      "area": "A02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A02.rotate_key",
+      "description": "轮换后仅新 Key 可鉴权",
+      "area": "A02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.dedup",
+      "description": "规范 URL 稳定去重",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.legal_empty",
+      "description": "合法零命中返回 empty",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.malformed",
+      "description": "畸形响应返回上游错误",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.missing_title",
+      "description": "缺失标题不伪造字段",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.no_model",
+      "description": "列表流程没有模型调用",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.partial",
+      "description": "无效候选与有效候选并存时返回 partial",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A03.upstream_error",
+      "description": "上游失败不冒充合法空结果",
+      "area": "A03",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.confirmed_final",
+      "description": "只有上游确认时另填最终 URL",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.dual_formats",
+      "description": "同页同时返回 Markdown 和纯文本",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.lengths",
+      "description": "长度使用 Unicode 标量计数",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.no_search_model",
+      "description": "正文流程不检索、不调用模型",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.one_url",
+      "description": "只传一个 URL 即可取文",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A04.unicode",
+      "description": "保留多字节字符与语义格式",
+      "area": "A04",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.empty_article",
+      "description": "空正文返回失败",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.login",
+      "description": "登录页不返回空成功",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.minimum_limit",
+      "description": "过小正文限额给出稳定字段错误",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.redirect_private",
+      "description": "重定向到禁止目标也拒绝",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.redirect_public",
+      "description": "公网允许目标重定向后保留请求地址",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.truncation",
+      "description": "双格式截断遵循同一文档树及限额",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.unreachable",
+      "description": "无法取到页面不返回空成功",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A05.unsafe_input",
+      "description": "拒绝私网和不允许的输入 URL",
+      "area": "A05",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A06.all_irrelevant",
+      "description": "全部明确不相关返回合法空结果",
+      "area": "A06",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A06.correction_once",
+      "description": "只纠正一次且只补缺失候选",
+      "area": "A06",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A06.invalid_ids",
+      "description": "未知和重复评分 ID 不污染候选",
+      "area": "A06",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A06.stable_ties",
+      "description": "同分按冻结顺序稳定排序",
+      "area": "A06",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A06.variant_merge",
+      "description": "多变体重复命中仅生成一个候选",
+      "area": "A06",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.compression_bound",
+      "description": "来源压缩最多两轮且保留引用",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.exact_tokens",
+      "description": "完整提示词在准确 Token 边界检查",
+      "area": "A07",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A07.format_retry_once",
+      "description": "模型格式纠正最多一次",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.invalid_citation",
+      "description": "不存在的引用不能进入成功综合",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.long_passages",
+      "description": "长正文按序形成多段",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.partial_passages",
+      "description": "单段失败仍保留有效证据并返回 partial",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.segment_cap",
+      "description": "每来源至多十六段",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.short_passage",
+      "description": "短正文只生成一段",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A07.stable_order",
+      "description": "并行完成不改变段序",
+      "area": "A07",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A08.cancel_release",
+      "description": "排队取消及时归还准入",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.completed_cancel",
+      "description": "取消时保留先完成分支的结构化命中",
+      "area": "A08",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A08.completed_timeout",
+      "description": "超时时保留先完成分支的结构化命中",
+      "area": "A08",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A08.cpu_lifetime",
+      "description": "已启动 CPU 工作退出后才归还名额",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.global_queue_full",
+      "description": "全局等待队列满后拒绝新增等待",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.model_fairness",
+      "description": "模型队列在请求之间轮转",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.parallel_limit",
+      "description": "单请求模型并行上限可核对",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.synthesis_reserve",
+      "description": "取文与段摘要为最终综合预留预算",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.total_deadline",
+      "description": "慢上游不重置全局截止时间",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A08.unsent_rpm",
+      "description": "未实际发送的预留不消耗 RPM",
+      "area": "A08",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A09.auth_failure",
+      "description": "代理认证失败可区分",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.body_mismatch",
+      "description": "正文标记不匹配有独立归因",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.disabled",
+      "description": "停用代理立即退出新派发",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.expected_200",
+      "description": "预期状态及正文均匹配才成功",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.https",
+      "description": "HTTPS CONNECT 配置正确保存",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.no_secret_echo",
+      "description": "资源和测试回执不回显口令",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.password",
+      "description": "带口令代理可完成手工测试",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.phase_diagnostics",
+      "description": "连接、协议及目标响应阶段分开计时",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.reference_conflict",
+      "description": "仍被池引用时删除返回可定位冲突",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.socks",
+      "description": "SOCKS5 配置正确保存",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.tls_failure",
+      "description": "代理证书失败可区分",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.unexpected_404",
+      "description": "目标 404 判测试失败但通道可达",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.unexpected_500",
+      "description": "目标 500 判测试失败但通道可达",
+      "area": "A09",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A09.version_receipt",
+      "description": "测试回执固定被测版本且改版不继承",
+      "area": "A09",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.atomic_lease",
+      "description": "浏览器及代理资源原子授予无半占用",
+      "area": "A10",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.both_saturated",
+      "description": "两条健康出口均满后拒绝额外租约",
+      "area": "A10",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.fixed_egress",
+      "description": "同任务的 Pod、上下文与出口固定",
+      "area": "A10",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.https_egress",
+      "description": "实际页面流量经过选中的 HTTPS 出口",
+      "area": "A10",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.one_reselection",
+      "description": "可归因代理连接失败最多重选一次",
+      "area": "A10",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.shared_proxy_limit",
+      "description": "不同项目共享代理实际并发上限",
+      "area": "A10",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.socks_egress",
+      "description": "实际页面流量经过选中的 SOCKS5 出口",
+      "area": "A10",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.target_refusal",
+      "description": "站点拒绝不降低健康代理状态",
+      "area": "A10",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A10.tie_rotation",
+      "description": "相同权重轮转无永久偏置",
+      "area": "A10",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A10.weighted_choice",
+      "description": "两个健康出口按池权重选择",
+      "area": "A10",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.bounded_registry",
+      "description": "注册表有容量上限并拒绝溢出",
+      "area": "A11",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A11.cancel_navigation",
+      "description": "导航中取消终止访问并回收",
+      "area": "A11",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.deadline_cancel",
+      "description": "执行器截止不被 WebDriver 门控阻塞",
+      "area": "A11",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A11.late_open",
+      "description": "取消后迟到 open 不能重开作业",
+      "area": "A11",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.quarantine",
+      "description": "未确认清理的名额隔离至回执",
+      "area": "A11",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.stale_owner",
+      "description": "旧 owner 不能关闭新作业",
+      "area": "A11",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.target_denial",
+      "description": "站点明确拒访后停止该访问",
+      "area": "A11",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A11.worker_crash",
+      "description": "执行器崩溃返回失败并恢复",
+      "area": "A11",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A12.distinct_ids",
+      "description": "不同项目相同问题拥有不同请求 ID",
+      "area": "A12",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A12.project_calls",
+      "description": "调用归属各自项目",
+      "area": "A12",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A12.scoped_citations",
+      "description": "来源引用属于此次请求",
+      "area": "A12",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A12.snapshot_version",
+      "description": "记录固定执行时项目版本",
+      "area": "A12",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.calendar_timezone",
+      "description": "日历桶按查询时区解释",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.completed_evidence",
+      "description": "完成和未完成变体分别记录已知下界",
+      "area": "A13",
+      "required_suites": [
+        "rust",
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.conflict_rollback",
+      "description": "同 call_id 冲突载荷使整个事务回滚",
+      "area": "A13",
+      "required_suites": [
+        "database"
+      ]
+    },
+    {
+      "id": "A13.day_and_edges",
+      "description": "整日及两端零散窗口正确组合",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.drop_counter",
+      "description": "观测丢弃计数及原因可核对",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.expired_payload",
+      "description": "载荷过期不伪装为完整材料",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.idempotent_call",
+      "description": "重复 call_id 只入库及累计一次",
+      "area": "A13",
+      "required_suites": [
+        "database"
+      ]
+    },
+    {
+      "id": "A13.no_double_count",
+      "description": "小时与日贡献不重复累计",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.phase_accounting",
+      "description": "慢上下文不计入导航或执行子阶段",
+      "area": "A13",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A13.queue_business_independent",
+      "description": "观测队列阻塞不改变业务终态",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A13.unknown_ratio",
+      "description": "分母为零的比率为未知",
+      "area": "A13",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.atlas_controls",
+      "description": "Atlas 分组导航、卡片内边距、35px 常规操作、28px 紧凑操作与表单尺寸一致",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.blue_theme",
+      "description": "中英文桌面和窄屏的主操作使用 #5070f2，卡片与趋势图适配浅色及深色主题",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.citation_range",
+      "description": "引用下钻高亮对应原文范围",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.display.en.dark",
+      "description": "英文深色页面可用",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.display.en.light",
+      "description": "英文浅色页面可用",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.display.zh.dark",
+      "description": "中文深色页面可用",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.display.zh.light",
+      "description": "中文浅色页面可用",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.focus_restore",
+      "description": "独立放弃确认恢复到安全焦点",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.form_control_rows",
+      "description": "调试项目在输入卡片内，搜索只显示整框焦点，字段与同行操作等高",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.keyboard",
+      "description": "键盘可切换页签",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.login",
+      "description": "真实浏览器完成管理员登录",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.login_split",
+      "description": "登录页桌面左右分栏、窄屏上下排列，OpenAgentSearch 说明与登录表单独立，中英文深浅色均可用",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.markdown_plaintext",
+      "description": "正文 Markdown 与纯文本视图可切换",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.narrow",
+      "description": "窄屏不发生页面横向溢出",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.no_refetch",
+      "description": "历史切换视图不重抓原站",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.pool_create",
+      "description": "通过 HeroUI 创建带权重代理池",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.project_create",
+      "description": "通过 HeroUI 创建项目及一次性密钥",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A14.three_operations",
+      "description": "调试台三项业务操作可执行",
+      "area": "A14",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.citation_quality",
+      "description": "核对引用有效率",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.default_admin",
+      "description": "未配置初始账号时使用 admin / admin123，并能通过真实登录",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.empty_database",
+      "description": "空 PostgreSQL 启动后迁移、初始管理员及内置能力就绪",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.error_rate",
+      "description": "记录独立失败率",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.fact_language_time",
+      "description": "事实、目标语言及无虚构日期符合基线",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.latency",
+      "description": "记录 P50 与 P95",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.material_coverage",
+      "description": "核对材料覆盖率",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.mixed_load",
+      "description": "混合三操作及双语并发负载可复现",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.model_replacement",
+      "description": "替换模型标识后重新执行同一基线",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.ownership_loss",
+      "description": "丢失调度所有权取消在途工作且重启恢复",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.queue_time",
+      "description": "记录上游累计排队时间",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A15.token_usage",
+      "description": "记录输入及输出 Token",
+      "area": "A15",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A16.available_options",
+      "description": "新增成员只预选可用组件",
+      "area": "A16",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A16.combination.00",
+      "description": "两项关闭时基础服务就绪且无可选工作负载和服务",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.combination.01",
+      "description": "仅取文组件启用时资源与开关一致",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.combination.10",
+      "description": "仅搜索组件启用时资源与开关一致",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.combination.11",
+      "description": "两项启用时资源与开关一致",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.combined_pipeline",
+      "description": "SearXNG 到 Crawl4AI 组合进入总结",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.crawl4ai_dns",
+      "description": "公开域名解析可按需仅在 Crawl4AI Pod 内启用经过身份校验的 DNS over TLS，集群域名仍由集群 DNS 解析",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.disabled_reference",
+      "description": "升级关闭后保留项目引用并显示不可用",
+      "area": "A16",
+      "required_suites": [
+        "docker",
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.independent_switches",
+      "description": "两个组件的 Deployment 和 Service 独立受控",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.native_reader",
+      "description": "真实 Crawl4AI 原生取文返回正文",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A16.native_search",
+      "description": "真实 SearXNG 原生搜索返回结果",
+      "area": "A16",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A17.context.both",
+      "description": "两项同时存在时独立呈现",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.context.none",
+      "description": "无附加上下文时不生成相关指令",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.context.region",
+      "description": "仅地区时独立生成地区字段与指令",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.context.time",
+      "description": "仅时间时独立生成时间字段与指令",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.invalid_date",
+      "description": "非法日历日期指出字段",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.midnight_offset",
+      "description": "跨午夜等价时刻保留各自当地日期",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.offset_required",
+      "description": "时间缺少偏移被拒绝",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A17.rewrite_disabled",
+      "description": "零次改写不产生模型改写调用",
+      "area": "A17",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.catalog.model",
+      "description": "模型分类按目录新增服务商",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.catalog.reader",
+      "description": "正文分类按目录新增原生服务商",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.catalog.search",
+      "description": "搜索分类按目录新增原生服务商",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.committed_debug",
+      "description": "调试使用已提交项目配置",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.conflict_draft",
+      "description": "版本冲突保留草稿并允许载入最新",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.credential_actions",
+      "description": "保留、替换、清除凭据含义一致",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.fractional_timeout",
+      "description": "秒的小数精确转换为毫秒",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.historical_version",
+      "description": "修改配置后历史仍显示原快照",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.language_catalog",
+      "description": "通过中英文名称或标签从地区语言目录选择并保存优先路由",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.pool_order",
+      "description": "界面调换池后保存并影响下一次调用",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.save_language_route",
+      "description": "语言优先规则可保存并读取",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A18.test_version",
+      "description": "测试固定执行版本不覆盖新版回执",
+      "area": "A18",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.citation_scope",
+      "description": "来源及引用在请求内有效",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.incomplete_payload",
+      "description": "取消或载荷不完整不显示成零命中",
+      "area": "A19",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A19.inline_article",
+      "description": "搜索随附正文可直接成为材料",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.missing_material",
+      "description": "无材料明确显示缺失",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.reader_article",
+      "description": "独立取文成功可成为材料",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.reader_failed_chain",
+      "description": "全部取文失败后简介保留全部尝试",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.reader_retry_chain",
+      "description": "首个取文失败到后续成功保留全部关联",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.snippet_fallback",
+      "description": "普通取文失败后按项目设置回退简介",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.unicode_ranges",
+      "description": "多字节字符原文范围可复核",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A19.unsafe_no_snippet",
+      "description": "拒绝访问目标不通过简介继续处理",
+      "area": "A19",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.atlas_dashboard",
+      "description": "总览使用深蓝趋势及操作分布，按真实数据和时段下钻，缺省零值不显示 NaN",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.defaults_explicit",
+      "description": "调试默认继承与显式覆盖可区分",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.discard_dialog",
+      "description": "未保存表单使用独立确认弹框",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.endpoint_detail",
+      "description": "各类接入点只读详情显示协议与单位",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.field_errors",
+      "description": "失败提示指出具体字段",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.overlay_widths",
+      "description": "编辑、普通、确认和侧抽屉按实际可视宽度展开，长表单滚动时页脚可操作",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.pool_detail",
+      "description": "池只读详情显示成员名称和权重",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.project_detail",
+      "description": "项目只读详情显示资源名称及取值",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.project_layout",
+      "description": "项目卡片按可用宽度最多四列，表单的两类接入点池各占一行",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.proxy_detail",
+      "description": "代理只读详情显示主机、端口及编辑入口",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.readable_browser_phases",
+      "description": "浏览器阶段以双语名称、层级和毫秒呈现",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.reference_links",
+      "description": "资源引用跳转到对应详情",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.return_filters",
+      "description": "调用下钻返回保留查询条件",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.route_draft",
+      "description": "语言路由草稿跨页面保留",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A20.separate_edit",
+      "description": "详情与编辑分离",
+      "area": "A20",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.browser_reader_exempt",
+      "description": "内置正文不受半小时排除但能降级",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.browser_search_exempt",
+      "description": "内置搜索不受半小时排除但能降级",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.cross_project_risk",
+      "description": "普通接入点风控跨项目共享",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.equal_round_robin",
+      "description": "同池接入点等权轮询",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.forward_only",
+      "description": "从入口只向后尝试不回绕",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.language_entry",
+      "description": "语言命中池立即作为入口",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.native_time_capabilities",
+      "description": "显式日期按适配器原生能力过滤，仅剩不支持成员时不发上游请求",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.observation_readonly",
+      "description": "只改变观测样本不改变调度",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.open_languages",
+      "description": "请求语言只选起始池，语言标签归一化，未传语言从第一池开始",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.pool_exhausted",
+      "description": "整个池无法调用才向后降级",
+      "area": "A21",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A21.recover_30m",
+      "description": "普通风控恰在三十分钟到期恢复",
+      "area": "A21",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A21.risk_one_peer",
+      "description": "单个成员风控仍可用同池其他成员",
+      "area": "A21",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A22.historical_pod",
+      "description": "历史记录保留替换前实际 UID",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.new_capacity",
+      "description": "已有项目自动使用第三份容量",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.ready_only",
+      "description": "仅就绪 Pod 承接",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.restore",
+      "description": "恢复副本后自动恢复承接",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.rolling_replace",
+      "description": "滚动替换后新调用使用新 UID",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.scale_2_to_3",
+      "description": "Firefox 从两 Pod 扩至三 Pod 自动发现",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A22.zero_preserves_refs",
+      "description": "缩至零保留能力引用并拒绝新浏览器调用",
+      "area": "A22",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A23.both_engines_fail",
+      "description": "两个引擎都被拒绝后按项目池规则尝试下一接入点",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.default_shared",
+      "description": "多个执行 Pod 引用共享默认样本",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.engine.default.baidu",
+      "description": "默认网络不可达选择百度",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.engine.default.google",
+      "description": "默认网络可达选择 Google",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.engine.proxy.baidu",
+      "description": "代理不可达选择百度",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.engine.proxy.google",
+      "description": "代理可达选择 Google",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.frozen_sample",
+      "description": "已开始作业固定样本、后续作业用新样本",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.google_empty_terminal",
+      "description": "Google 明确返回空结果时只记录一次调用",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.google_timeout_fallback",
+      "description": "Google 搜索超时时给同一请求保留百度尝试预算",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.measured_peer",
+      "description": "同池已测成员可承接",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.probe_cardinality",
+      "description": "每轮两 VPN 加默认网络恰好三次检测",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.reader_independent",
+      "description": "正文不依赖 Google 探测结果",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.representative_handoff",
+      "description": "代表 Pod 替换不重复常规周期",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.restart_schedule",
+      "description": "恢复及周期边界不触发额外检测",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.runtime_google_fallback",
+      "description": "业务搜索切换到百度时复用 Pod 与代理、保留问题及时间范围，并关联两次调用",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.scale_to_6",
+      "description": "扩至六 Pod 不增加检测数量",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.stale_version",
+      "description": "旧配置版本回执不能发布样本",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A23.test_engine_fallback",
+      "description": "内置搜索测试在 Google 风控时同作业尝试百度并返回实测结果",
+      "area": "A23",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A23.unknown_no_lease",
+      "description": "未首测出口获得零搜索租约",
+      "area": "A23",
+      "required_suites": [
+        "rust"
+      ]
+    },
+    {
+      "id": "A24.inline_scoring",
+      "description": "随附正文能进入评分且无需再次取文",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.no_firefox",
+      "description": "原生适配占用零 Firefox 槽位",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.reader.anysearch",
+      "description": "AnySearch 正文原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.reader.crawl4ai",
+      "description": "Crawl4AI 正文原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.reader.deepseek",
+      "description": "DeepSeek 正文原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.reader.tavily",
+      "description": "Tavily 正文原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.search.anysearch",
+      "description": "AnySearch 搜索原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.search.deepseek",
+      "description": "DeepSeek 搜索原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.search.searxng",
+      "description": "SearXNG 搜索原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.search.tavily",
+      "description": "Tavily 搜索原生路径、鉴权、成功、空、HTTP及业务失败",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A24.unknown_final_url",
+      "description": "上游未确认最终地址则保留请求 URL 并省略 final_url",
+      "area": "A24",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A25.command_timeout",
+      "description": "命令超时指出等待阶段",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.doctor_components",
+      "description": "doctor 核对可选原生组件与 schema",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.doctor_service_account",
+      "description": "doctor 核对实际 ServiceAccount 权限",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.doctor_storage",
+      "description": "doctor 核对 PVC、卷归属及存储类",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.initial_admin_options",
+      "description": "oasctl 安装参数覆盖 values 中的初始账号密码，口令文件不进入 Helm 参数",
+      "area": "A25",
+      "required_suites": [
+        "rust",
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.install",
+      "description": "oasctl 从空命名空间安装就绪",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.migration_failure",
+      "description": "迁移失败指出阶段与迁移实况",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.preserve_admin_credentials",
+      "description": "重启和升级保留已有管理员，不重新套用初始化密码",
+      "area": "A25",
+      "required_suites": [
+        "database",
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.preserve_config",
+      "description": "升级保持项目配置",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.preserve_history",
+      "description": "升级后原请求仍可读取",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.preserve_key",
+      "description": "升级后原业务 Key 仍有效",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.preserve_secret",
+      "description": "升级保持加密接入点凭据且仍可调用",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A25.retry_inspection",
+      "description": "重试后可核对修订、迁移及已部署状态",
+      "area": "A25",
+      "required_suites": [
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "A26.archived_layout_assets",
+      "description": "保存两栏布局、样式、图片及字体",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.markdown_render",
+      "description": "Markdown 渲染标题、表格及代码",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.model_exchange",
+      "description": "模型归档保存实际原始消息与回复",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.no_scripts",
+      "description": "回放无脚本或外部执行",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.offline",
+      "description": "原站下线后仍可回放",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.partial_assets",
+      "description": "布局资源缺失明确标部分并保留正文",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.sandbox",
+      "description": "iframe 使用空 sandbox",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.source_view",
+      "description": "可查看 Markdown 源文",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A26.wrong_request",
+      "description": "不能跨请求读取材料",
+      "area": "A26",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.calls_expire",
+      "description": "到期调用停止展示",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.export_expire",
+      "description": "到期记录不可导出",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.extend_new_only",
+      "description": "延长期限也只作用于新记录",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.fixed_expiry",
+      "description": "每条记录固定创建时的到期时刻",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.four_day_old_visible",
+      "description": "已保存四天的旧记录仍可读",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.materials_expire",
+      "description": "到期材料和回放不可读",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.mixed_same_version",
+      "description": "同版本不同到期时刻也正确过滤",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.mixed_versions",
+      "description": "同小时桶跨设置版本按贡献期限过滤",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.new_only",
+      "description": "新设置仅影响之后产生的数据",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.physical_cleanup_lag",
+      "description": "物理回收滞后不暴露过期数据",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "A27.seven_to_three",
+      "description": "全局保留七天可修改为三天",
+      "area": "A27",
+      "required_suites": [
+        "docker"
+      ]
+    }
+  ]
+}

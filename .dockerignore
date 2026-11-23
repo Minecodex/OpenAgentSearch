@@ -1,0 +1,9 @@
+.git
+target
+**/node_modules
+**/dist
+**/test-results
+artifacts
+.env*
+docs/plan1/demo/assets
+docs/plan1/demo/previews

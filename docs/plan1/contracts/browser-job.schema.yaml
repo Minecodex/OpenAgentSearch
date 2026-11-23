@@ -1,7 +1,7 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 title: BrowserJob
 type: object
-required: [job_id, pod_name, pod_uid, egress_mode, phases]
+required: [job_id, pod_name, pod_uid, egress_mode, phases, reused_context]
 properties:
   job_id: {type: string}
   pod_name: {type: string, minLength: 1}
@@ -12,33 +12,55 @@ properties:
     allOf:
     - {$ref: ./google-reachability.schema.yaml}
     - {properties: {reachable: {type: boolean}}}
-  search_engine: {enum: [google, baidu], description: 搜索任务根据实际出口的连通样本选定的引擎。}
+  search_engine: {enum: [google, baidu], description: 本条已派发调用使用的引擎。}
+  engine_selection:
+    type: object
+    required: [reason, failure_code, retry_at]
+    additionalProperties: false
+    properties:
+      reason: {const: google_cooldown}
+      failure_code: {enum: [ENDPOINT_RISK_CONTROL, SEARCH_ENGINE_UNAVAILABLE, SEARCH_RESULTS_UNAVAILABLE, UPSTREAM_TIMEOUT]}
+      retry_at: {type: string, format: date-time}
+  engine_fallback:
+    type: object
+    description: 本作业从 Google 切到百度的依据。call_id 指向同一作业触发切换的 Google 调用。
+    required: [from, reason, call_id]
+    additionalProperties: false
+    properties:
+      from: {const: google}
+      reason: {enum: [ENDPOINT_RISK_CONTROL, SEARCH_ENGINE_UNAVAILABLE, SEARCH_RESULTS_UNAVAILABLE, UPSTREAM_TIMEOUT]}
+      call_id: {type: string, format: uuid}
   pool_id: {type: string, format: uuid}
   pool_name: {type: string}
   proxy_id: {type: string, format: uuid}
   proxy_version: {type: integer, minimum: 1}
   proxy_name: {type: string}
   scheme: {enum: [socks5, https]}
+  reused_context: {type: boolean, description: 是否在同一逻辑调用的后续尝试中复用浏览器作业；不同查询和网页分别持有独立作业。}
   phases:
     type: array
-    items:
-      type: object
-      required: [stage, start_offset_ms, duration_ms, status]
-      properties:
-        stage: {enum: [allocate, context, navigate, extract, cleanup]}
-        start_offset_ms: {type: integer, minimum: 0}
-        duration_ms: {type: integer, minimum: 0}
-        status: {enum: [success, error, cancelled]}
-      additionalProperties: false
-dependentRequired: {google_probe: [search_engine], search_engine: [google_probe]}
+    items: {$ref: ./phase.schema.yaml}
+dependentRequired: {engine_selection: [google_probe, search_engine], pool_id: [pool_name], pool_name: [pool_id], google_probe: [search_engine], search_engine: [google_probe]}
 allOf:
 - if: {properties: {egress_mode: {const: proxy}}}
-  then: {required: [pool_id, pool_name, proxy_id, proxy_version, proxy_name, scheme]}
+  then: {required: [proxy_id, proxy_version, proxy_name, scheme]}
   else:
     not: {anyOf: [{required: [pool_id]}, {required: [pool_name]}, {required: [proxy_id]}, {required: [proxy_version]}, {required: [proxy_name]}, {required: [scheme]}]}
     properties: {google_probe: {$ref: './google-reachability.schema.yaml#/$defs/sharedDefault'}}
 - if: {required: [google_probe], properties: {google_probe: {properties: {reachable: {const: true}}}}}
-  then: {properties: {search_engine: {const: google}}}
+  then:
+    oneOf:
+    - properties: {search_engine: {const: google}}
+      not: {anyOf: [{required: [engine_fallback]}, {required: [engine_selection]}]}
+    - required: [engine_fallback]
+      properties: {search_engine: {const: baidu}}
+    - required: [engine_selection]
+      properties: {search_engine: {const: baidu}}
+      not: {required: [engine_fallback]}
+- if: {required: [engine_fallback]}
+  then:
+    required: [google_probe, search_engine]
+    properties: {google_probe: {properties: {reachable: {const: true}}}, search_engine: {const: baidu}}
 - if: {required: [google_probe], properties: {google_probe: {properties: {reachable: {const: false}}}}}
   then: {properties: {search_engine: {const: baidu}}}
 additionalProperties: false

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "./theme.css";
+@import "./base.css";
+@import "./workspace.css";
+@import "./diagnostics.css";
+@import "./configuration.css";
+@import "./atlas.css";
+@import "./responsive.css";
+@import "./live.css";
+@import "./system.css";
+@import "./shell.css";
+@import "./login.css";
+@import "./dashboard.css";
+@import "./pages.css";
+@import "./overlays.css";
+@import "./trace-execution.css";

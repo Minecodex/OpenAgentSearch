@@ -52,7 +52,7 @@ sequenceDiagram
 
 首次初始化管理员由部署注入账号和口令，服务保存带盐口令哈希。会话使用随机令牌，库内存摘要和到期时间，Cookie 设置 `HttpOnly/SameSite=Strict`，HTTPS 下启用 `Secure`。登录及管理写校验 Origin，登录后的所有写操作还校验 CSRF。口令、会话、项目 Key 和代理口令均不得写入普通日志。
 
-项目 Key 以高熵随机值签发，库内保存摘要和显示前缀。创建或轮换时只交付一次明文。端点与代理凭据需要出站使用，采用认证加密，记录加密密钥版本，主密钥由部署注入。更新凭据使用 `keep/replace/clear` 操作，视图只返回 `has_secret`。凭据版本加入资源配置版本，停用或轮换后新派发立即采用新配置。
+项目 Key 以高熵随机值签发，库内保存摘要和显示前缀。创建或轮换时只交付一次明文。端点与代理凭据需要出站使用，采用 AES-256-GCM 认证加密，`resources.secret_key_version` 记录密钥代次，当前为 1，主密钥由部署注入并在普通升级中保留。更新凭据使用 `keep/replace/clear` 操作，视图只返回 `has_secret`。凭据版本加入资源配置版本，停用或轮换后新派发立即采用新配置。
 
 ```mermaid
 flowchart LR
@@ -83,14 +83,25 @@ erDiagram
 
 | 表族 | 主键、关系与约束 |
 | --- | --- |
-| `administrators, admin_sessions` | 管理员 ID 与会话摘要，索引到期时间，注销立即失效 |
-| `history_retention` | 整套部署保存一条全局配置，包含保留天数和设置版本，初始为 7 天。管理员更新时校验乐观版本，提交后的新请求采用新版本。 |
-| `projects, project_keys` | 项目 UUID。每项目一个当前有效 Key，摘要唯一。含默认语言、允许语言、结果数、材料数、字数、摘要策略、模型与浏览器代理池引用 |
-| `endpoints, project_endpoint_members, endpoint_tests, language_routes` | 系统初始化时幂等建立两个稳定浏览器能力 ID，Pod 就绪变化只更新运行时实例清单。 成员以 `(project_id,kind,endpoint_id)` 唯一，`(project_id,kind,pool_no,position)` 唯一。限制端点类型与能力。测试按发起时间及资源版本条件写回 |
+| `administrators, sessions` | 管理员账号与口令哈希、会话令牌摘要、CSRF 和到期时间；注销立即删除当前会话 |
+| `settings` | `retention` 保存全局保留天数及版本，初始为 7 天；`language-routes` 保存语言映射。两者分别检查乐观版本。 |
+| `resources, project_keys` | `resources.kind=projects/endpoints/proxies/proxy-pools`，配置存在 JSONB body，另列 UUID、版本、归档、密文和创建/更新时间。每项目一个当前有效 Key，摘要唯一。项目 JSONB 保留有序能力池、限额及模型和代理池引用 |
+| `resource_links` 与端点 body | 引用边由 `(owner_id,target_id,role)` 唯一约束保护。项目内同一能力成员不得重复，JSONB 数组固定池和成员位置。系统初始化幂等建立两个稳定浏览器能力 ID，Pod 变化只更新运行清单。测试回执按发起时间及资源版本条件写入 `last_test` |
 | `endpoint_risk_cooldowns` | 以接入点 ID 为主键。调度所有者收到接入点风控信号时，以原子更新保留较晚的 `blocked_until`。接管时加载未到期的记录，以 UTC 截止时间恢复资格。内置浏览器免写此表。 |
-| `proxies, proxy_pools, proxy_pool_members, proxy_tests` | 每个代理有协议、主机、端口、密文、容量、启停和版本。池内成员唯一，权重为正整数。代理健康样本只属于测试或真实执行时的版本 |
-| Google 连通样本 | 每条 VPN 按 `(proxy_id,proxy_version)` 关联样本。每套安装只维护一份 `default_network` 样本，所有 Firefox Pod 共用，采样 Pod 的 UID 保存为来源。后台每 1800 秒刷新，按当前配置和检测轮次拒收迟到回执。内置搜索派发时冻结已完成的样本，首次结果待定的出口不获搜索租约。 |
-| `requests, request_spans, request_evidence` | 创建请求或独立测试记录的事务读取已提交的全局设置，在主记录冻结 `retention_days,retention_version,expires_at`，按 `expires_at` 索引回收。子表按 `(request_id,span_id)` 与 `(request_id,source_id,segment_id)` 索引。保留阶段、来源、材料范围、模型版本和引用。完整网页、布局及其资源、逐次模型输入输出关联请求、阶段和调用。以 `(request_id,material_id)` 定位一份材料，按需授权读取。原文、布局数据和依赖资源随所属请求一并到期回收。记录保留状态与缺失原因。到期条件覆盖读路径和清理任务 |
-| `endpoint_calls, endpoint_stats_hour, endpoint_stats_day` | `call_id` 唯一，每个贡献沿用所属请求的 `expires_at`。按 `(bucket_at,dimension_hash,retention_version)` 分桶并记录贡献的到期范围。混合到期的桶按有效明细汇总；清理后原子重建汇总及边界。保留端点版本、来源、操作、有效语言和时间条件 |
+| 代理配置及运行字段 | `resources` 保存协议、容量、启停及配置版本，健康字段带独立修订号；池成员 UUID 唯一，权重为 1–100 的整数。密文单独存储，测试和健康更新均校验对应版本 |
+| `probes` | 每条 VPN 关联代理版本，每套安装一份 `default_network`，采样 Pod UID 保留为来源。数据库序列为发布轮次提供单调代次。后台每 1800 秒刷新，首次结果待定的出口不获搜索租约 |
+| `browser_jobs` | 浏览器任务、实际 Pod、owner、出口身份及 opening/open 状态。重启后用于回收尚未确认关闭的上下文和保留租约；不恢复页面会话 |
+| `requests, materials` | 请求行冻结 `retention_days,retention_version,expires_at`，record 保存小型列表字段，payload JSONB 保存配置、请求响应、Span 与证据。`materials` 以 `(request_id,material_id)` 定位完整网页、规范正文、布局资源与模型往返，并通过外键级联回收。详情仅投影阶段元数据，证据与单步载荷分别按需读取，到期检查覆盖详情、调用、回放及导出 |
+| `endpoint_calls, endpoint_stats_hour, endpoint_stats_day` | `call_id` 唯一，每个贡献继承请求的 `expires_at`。按 `(bucket_at,dimension_hash,retention_version)` 分桶并维护到期范围。完整有效桶与边缘明细在同一读取快照中组合，部分到期桶回查有效明细，完全到期桶删除。保留端点版本、来源、操作与有效语言维度 |
 
 配置对象都有 `created_at,updated_at,version`。列表使用稳定时间键和 UUID 的游标，默认 20、最大 100。游标绑定筛选条件与时间窗。请求/统计时间窗口统一采用 UTC 半开区间 `[from,to)`。历史请求展示当时的显示名称和版本，归档配置不破坏历史解释。
+
+请求和调用列表在 PostgreSQL 中按 `(时间,UUID)` 做键集分页，查询 `limit+1` 行，不先加载全窗口再切页。游标同时冻结窗口并绑定筛选，改条件后使用旧游标返回字段错误。按请求 ID 查看历史调用时覆盖该请求的整个保留范围。全局请求聚合与接入点统计采用流式或桶读取，内存按统计组和最多 500 个时间点增长。
+
+## 管理员初始化与口令生命周期
+
+初始账号默认 `admin / admin123`，可在 `oasctl install` 或 Helm values 中指定。后端与 CLI 共用用户名、口令校验规则，初始化口令至少 8 个 Unicode 字符。空库初始化采用事务锁，只有管理员表为空时才插入第一名管理员。启动配置只参与首次初始化，重启和升级不覆盖已有口令或添加另一名初始化管理员。
+
+口令使用随机盐的 Argon2id 散列保存。显式维护重置在一个事务内更新散列并删除该管理员的全部会话；签发会话前再次锁定并核对已验证的散列，避免并发旧密码登录在重置后签发新会话。登录 HTTP 请求及响应契约沿用现有 `/session`，维护命令与 Secret 同步方式见 [安装运维](./12-oasctl-and-helm.md#初始管理员与显式口令重置)。
+
+浏览器引擎搜索状态由 browser_engine_health 保存，主键为出口 ID 与配置版本，字段包括失败代码和重试时间。十分钟冷却用于同一出口在 Pod 与请求间共享的初始引擎选择，独立于三十分钟网络连通采样和接入点风控隔离。

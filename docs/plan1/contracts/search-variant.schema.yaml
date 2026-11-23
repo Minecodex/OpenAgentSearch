@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: SearchVariantEvidence
+type: object
+required: [variant_id, query, status, hits, call_ids, result_call_id]
+properties:
+  variant_id: {type: string, minLength: 1}
+  query: {type: string}
+  status: {enum: [pending, running, success, partial, error, cancelled]}
+  call_ids: {type: array, items: {type: string}, uniqueItems: true, description: 已发送的该变体搜索尝试，按实际派发顺序。}
+  result_call_id: {type: [string, 'null'], description: 交付本变体命中的调用，未知或未取得结果时为 null。}
+  hits:
+    type: [array, 'null']
+    description: 已完成分支即时保存。null 表示结果未知，空数组表示确知无命中。
+    items:
+      type: object
+      required: [url, title, snippet, rank, call_id]
+      properties:
+        url: {type: string, format: uri}
+        title: {type: string}
+        snippet: {type: string}
+        rank: {type: integer, minimum: 1}
+        call_id: {type: string}
+      additionalProperties: false
+additionalProperties: false

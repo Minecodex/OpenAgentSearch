@@ -1,0 +1,46 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: RuntimeDiagnosticsResponse
+type: object
+required: [request_id, status, data, warnings, error]
+properties:
+  request_id: {type: string}
+  status: {const: success}
+  warnings: {type: array, maxItems: 0}
+  error: {type: 'null'}
+  data:
+    type: object
+    required: [ready, schema_version, scheduler, components, diagnostics]
+    properties:
+      ready: {type: boolean}
+      schema_version: {type: [integer, 'null']}
+      scheduler:
+        type: object
+        required: [stopping, active_requests, ready_workers, recovering_workers, active_leases, reserved_rpm]
+        properties:
+          stopping: {type: boolean}
+          active_requests: {type: integer, minimum: 0}
+          ready_workers: {type: integer, minimum: 0}
+          recovering_workers: {type: integer, minimum: 0}
+          active_leases: {type: object, additionalProperties: {type: integer, minimum: 0}}
+          reserved_rpm: {type: object, additionalProperties: {type: integer, minimum: 0}}
+        additionalProperties: false
+      components:
+        type: array
+        items:
+          type: object
+          required: [name, availability]
+          properties:
+            name: {enum: [searxng, crawl4ai]}
+            availability: {enum: [available, component_unready, component_disabled]}
+          additionalProperties: false
+      diagnostics:
+        type: object
+        required: [dropped, failed, stored, queue_remaining]
+        properties:
+          dropped: {type: integer, minimum: 0}
+          failed: {type: integer, minimum: 0}
+          stored: {type: integer, minimum: 0}
+          queue_remaining: {type: integer, minimum: 0}
+        additionalProperties: false
+    additionalProperties: false
+additionalProperties: false

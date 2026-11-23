@@ -1,0 +1,221 @@
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  place-items: stretch;
+  background: var(--bg);
+}
+.login-introduction {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: clamp(40px, 5.8vw, 92px);
+  color: var(--brand-copy);
+  background: linear-gradient(
+    140deg,
+    var(--brand-background),
+    var(--brand-deep)
+  );
+  overflow: hidden;
+}
+.login-introduction::after {
+  content: "";
+  position: absolute;
+  width: 570px;
+  height: 570px;
+  right: -280px;
+  bottom: -300px;
+  border: 1px solid #e9f2ff14;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 80px #e9f2ff05,
+    0 0 0 160px #e9f2ff04;
+  pointer-events: none;
+}
+.login-introduction__content {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  min-width: 0;
+}
+.login-introduction .brand-mark {
+  display: flex;
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  background: rgb(255 255 255 / 8%);
+  margin-bottom: 34px;
+}
+.login-introduction h2 {
+  color: var(--brand-copy);
+  font: 570 clamp(38px, 3.7vw, 56px) / 1.2 var(--font);
+  letter-spacing: -0.055em;
+}
+.login-introduction p {
+  font-size: 20px;
+  line-height: 1.8;
+  color: var(--brand-muted);
+  max-width: 430px;
+  margin-top: 26px;
+}
+.login-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 110px 40px;
+  min-width: 0;
+  min-height: 100dvh;
+}
+.login-tools {
+  position: absolute;
+  top: 32px;
+  right: 36px;
+}
+.login-card {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 420px);
+  padding: 0;
+  gap: 28px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.login-heading h1 {
+  font: 620 clamp(28px, 2.5vw, 36px) / 1.3 var(--font);
+  letter-spacing: -0.045em;
+  color: var(--ink);
+}
+.login-heading > p:last-child {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.login-fields {
+  display: grid;
+  gap: 22px;
+  margin-top: 8px;
+}
+.login-fields .input {
+  height: 48px;
+  min-height: 48px;
+  padding-inline: 14px;
+  font-size: 15px;
+}
+.login-fields .label {
+  font-size: 14px;
+}
+.login-submit.button {
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
+  font-size: 15px;
+  justify-content: center;
+  margin-top: 2px;
+}
+.login-submit > svg {
+  margin-left: 4px;
+}
+@media (min-width: 1800px) {
+  .login-content {
+    padding-inline: 80px;
+  }
+  .login-card {
+    width: 460px;
+  }
+}
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .login-introduction {
+    min-height: 280px;
+    padding: 36px 40px;
+  }
+  .login-introduction__content {
+    padding: 0;
+    max-width: 600px;
+  }
+  .login-introduction .brand-mark {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+  }
+  .login-introduction h2 {
+    font-size: 34px;
+  }
+  .login-introduction p {
+    font-size: 16px;
+    line-height: 1.75;
+    margin-top: 14px;
+    max-width: 520px;
+  }
+  .login-content {
+    min-height: 620px;
+    padding: 96px 32px 80px;
+  }
+  .login-tools {
+    top: 24px;
+    right: 28px;
+  }
+  .login-heading h1 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 480px) {
+  .login-fields .input {
+    font-size: 16px;
+  }
+  .login-introduction {
+    min-height: 244px;
+    padding: 30px 28px;
+  }
+  .login-introduction h2 {
+    font-size: 32px;
+  }
+  .login-introduction p {
+    font-size: 15px;
+  }
+  .login-content {
+    min-height: 600px;
+    padding: 88px 28px 76px;
+  }
+  .login-tools {
+    right: 22px;
+    top: 22px;
+  }
+  .login-heading h1 {
+    font-size: 28px;
+  }
+}
+
+.login-introduction .brand-mark i {
+  width: 6px;
+  height: 24px;
+  background: var(--brand-copy);
+}
+.login-introduction .brand-mark i:nth-child(2) {
+  height: 38px;
+}
+.login-introduction .brand-mark i:last-child {
+  height: 29px;
+}
+@media (max-width: 900px) {
+  .login-introduction .brand-mark i {
+    width: 4px;
+    height: 16px;
+  }
+  .login-introduction .brand-mark i:nth-child(2) {
+    height: 25px;
+  }
+  .login-introduction .brand-mark i:last-child {
+    height: 19px;
+  }
+}

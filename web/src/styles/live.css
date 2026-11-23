@@ -1,0 +1,344 @@
+.project-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.project-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.project-actions > * {
+  flex: 1;
+}
+.one-time-key {
+  display: block;
+  overflow-wrap: anywhere;
+  background: var(--tint);
+  padding: 20px;
+  margin: 15px 0;
+}
+.member-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 12px 0;
+}
+.member-row .field {
+  max-width: 120px;
+}
+.code-box {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 500px;
+  overflow: auto;
+  padding: 16px;
+  background: var(--subtle);
+  font: 12px/1.7 var(--mono);
+  border-radius: 8px;
+}
+.source-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.source-card > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+.source-card > summary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.source-card section {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+}
+.source-address {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+}
+.search-hit {
+  display: flex;
+  gap: 15px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.search-hit h3 {
+  font-size: 17px;
+}
+.response-bar {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.response-bar > a {
+  margin-left: auto;
+}
+.markdown {
+  line-height: 1.85;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  margin: 20px 0 10px;
+  font-weight: 650;
+}
+.markdown h1 {
+  font-size: 24px;
+}
+.markdown h2 {
+  font-size: 20px;
+}
+.markdown ul {
+  list-style: disc;
+  padding-left: 24px;
+}
+.markdown ol {
+  list-style: decimal;
+  padding-left: 24px;
+}
+.markdown pre {
+  padding: 18px;
+  background: var(--subtle);
+  overflow: auto;
+}
+.markdown table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.markdown td,
+.markdown th {
+  padding: 8px;
+  border: 1px solid var(--line);
+}
+.markdown p {
+  margin: 10px 0;
+}
+.replay-frame {
+  width: 100%;
+  height: 65vh;
+  border: 1px solid var(--line);
+  background: white;
+}
+.water-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 90px 90px;
+  gap: 14px;
+  padding: 16px 0;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.stage-track {
+  display: block;
+  background: var(--subtle);
+  height: 10px;
+  margin-top: 5px;
+}
+.stage-track i {
+  display: block;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.trend-bars {
+  height: 210px;
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  overflow: auto;
+}
+.trend-bars > button {
+  flex: 1;
+  min-width: 20px;
+  height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 8px;
+}
+.trend-bars > button > span {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 100%;
+  background: var(--tint);
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+}
+.trend-bars i {
+  display: block;
+}
+.trend-bars small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.palette-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.data-table td {
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+.citation-links {
+  display: flex;
+  gap: 10px;
+}
+@media (max-width: 700px) {
+  .water-row {
+    grid-template-columns: 1fr 70px;
+  }
+  .stage-track {
+    display: none;
+  }
+  .project-actions {
+    flex-wrap: wrap;
+  }
+}
+
+.execution-overview {
+  container-type: inline-size;
+  padding: 0;
+  overflow: hidden;
+}
+.execution-overview dl {
+  gap: 1px;
+}
+.candidate-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 18px 0;
+  text-align: start;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.candidate-row > span {
+  min-width: 0;
+}
+.candidate-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.candidate-row p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.candidate-row > span:last-child {
+  flex: 0 0 110px;
+  text-align: end;
+}
+.original-range {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 14px/1.8 var(--font);
+  max-height: 52vh;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.original-range mark {
+  background: var(--tint);
+  color: var(--ink);
+  outline: 2px solid var(--accent);
+}
+.variant-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.variant-cards .source-card {
+  margin: 0;
+}
+.observed-trend {
+  overflow-x: auto;
+}
+.observed-trend button {
+  min-width: 26px;
+}
+.observed-trend small {
+  display: block;
+  width: 80px;
+  white-space: normal;
+  font-size: 10px;
+  line-height: 1.3;
+}
+@media (max-width: 640px) {
+  .candidate-row > span:last-child {
+    flex-basis: 75px;
+  }
+  .execution-overview dd {
+    font-size: 12px;
+  }
+}
+
+.phase-diagnostics {
+  margin-block: 20px;
+}
+.phase-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.phase-list > li {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(100px, 0.8fr) 74px auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.phase-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.phase-list .phase-child {
+  padding-inline-start: 18px;
+  border-inline-start: 2px solid var(--line);
+}
+.phase-list > li > b {
+  font-variant-numeric: tabular-nums;
+}
+.reader-attempt > summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.probe-details .facts-grid {
+  margin-block: 12px;
+}
+@media (max-width: 640px) {
+  .phase-list > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+  }
+  .phase-list > li > span {
+    grid-row: 2;
+  }
+  .phase-list > li > b {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}

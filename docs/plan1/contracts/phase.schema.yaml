@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: DiagnosticPhase
+type: object
+required: [stage, start_offset_ms, duration_ms, status, source, scope]
+properties:
+  stage: {enum: [allocate, context, execute, validate, navigate, extract, archive, cleanup, connect, handshake, response]}
+  start_offset_ms: {type: integer, minimum: 0, description: 浏览器阶段按请求开始计偏移；代理测试按检测开始计偏移。worker 子阶段以 execute 开始对齐，存在单程通信误差。}
+  duration_ms: {type: integer, minimum: 0, description: 由 source 指定的同一单调时钟测量。execute 是父阶段，不能与子阶段相加。}
+  status: {enum: [success, error, cancelled]}
+  source: {enum: [api, worker]}
+  scope: {enum: [job, call]}
+  parent_stage: {const: execute}
+additionalProperties: false

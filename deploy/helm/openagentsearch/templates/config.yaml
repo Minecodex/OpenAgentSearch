@@ -1,0 +1,45 @@
+{{- $existing := lookup "v1" "Secret" .Release.Namespace (printf "%s-credentials" .Release.Name) -}}
+{{- if not .Values.credentials.existingSecret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-credentials
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+type: Opaque
+data:
+  admin-username: {{ if $existing }}{{ index $existing.data "admin-username" | quote }}{{ else }}{{ .Values.credentials.adminUsername | b64enc | quote }}{{ end }}
+  admin-password: {{ if $existing }}{{ index $existing.data "admin-password" | quote }}{{ else }}{{ default "admin123" .Values.credentials.adminPassword | b64enc | quote }}{{ end }}
+  master-key: {{ if $existing }}{{ index $existing.data "master-key" | quote }}{{ else }}{{ default (sha256sum (randAlphaNum 64)) .Values.credentials.masterKey | b64enc | quote }}{{ end }}
+  worker-key: {{ if $existing }}{{ index $existing.data "worker-key" | quote }}{{ else }}{{ default (randAlphaNum 48) .Values.credentials.workerKey | b64enc | quote }}{{ end }}
+  postgres-password: {{ if $existing }}{{ index $existing.data "postgres-password" | quote }}{{ else }}{{ default (randAlphaNum 32) .Values.postgres.password | b64enc | quote }}{{ end }}
+  crawl4ai-key: {{ if and $existing (hasKey $existing.data "crawl4ai-key") }}{{ index $existing.data "crawl4ai-key" | quote }}{{ else }}{{ randAlphaNum 48 | b64enc | quote }}{{ end }}
+  searxng-key: {{ if and $existing (hasKey $existing.data "searxng-key") }}{{ index $existing.data "searxng-key" | quote }}{{ else }}{{ randAlphaNum 48 | b64enc | quote }}{{ end }}
+{{- end }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-api
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-discovery
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-discovery
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+subjects:
+  - {kind: ServiceAccount, name: "{{ .Release.Name }}-api", namespace: "{{ .Release.Namespace }}"}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: "{{ .Release.Name }}-discovery"}

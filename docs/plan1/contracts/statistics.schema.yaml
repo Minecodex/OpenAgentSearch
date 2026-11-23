@@ -1,0 +1,109 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Statistics
+type: object
+properties:
+  from:
+    type: string
+    format: date-time
+  to:
+    type: string
+    format: date-time
+  timezone:
+    type: string
+    minLength: 1
+  overview:
+    $ref: '#/$defs/Metrics'
+  series:
+    type: array
+    items:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        metrics:
+          $ref: '#/$defs/Metrics'
+      required:
+      - from
+      - to
+      - metrics
+      additionalProperties: false
+    minItems: 0
+  endpoints:
+    type: array
+    items:
+      type: object
+      properties:
+        endpoint_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        metrics:
+          $ref: '#/$defs/Metrics'
+        name:
+          type: string
+      required:
+      - endpoint_id
+      - version
+      - metrics
+      additionalProperties: false
+    minItems: 0
+required:
+- from
+- to
+- timezone
+- overview
+- series
+- endpoints
+additionalProperties: false
+$defs:
+  Metrics:
+    type: object
+    properties:
+      calls:
+        type: integer
+        minimum: 0
+      successes:
+        type: integer
+        minimum: 0
+      queue_ms:
+        type: integer
+        minimum: 0
+      execution_ms:
+        type: integer
+        minimum: 0
+      speed_samples:
+        type: integer
+        minimum: 0
+      speed_ms:
+        type: integer
+        minimum: 0
+      quality_numerator:
+        type: integer
+        minimum: 0
+      quality_denominator:
+        type: integer
+        minimum: 0
+      input_tokens: {type: integer, minimum: 0}
+      output_tokens: {type: integer, minimum: 0}
+      usage_samples: {type: integer, minimum: 0}
+      p95_ms:
+        anyOf:
+        - type: number
+        - type: 'null'
+    required:
+    - calls
+    - successes
+    - queue_ms
+    - execution_ms
+    - speed_samples
+    - speed_ms
+    - quality_numerator
+    - quality_denominator
+    - p95_ms
+    additionalProperties: false

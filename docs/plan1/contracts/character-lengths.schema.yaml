@@ -1,0 +1,7 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+required: [text, markdown]
+properties:
+  text: {$ref: ./business.openapi.yaml#/components/schemas/Length}
+  markdown: {$ref: ./business.openapi.yaml#/components/schemas/Length}
+additionalProperties: false

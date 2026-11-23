@@ -1,0 +1,6 @@
+apiVersion: v2
+name: openagentsearch
+description: OpenAgentSearch API, Atlas console and Firefox workers
+type: application
+version: 0.0.1-beta
+appVersion: "v0.0.1-beta"

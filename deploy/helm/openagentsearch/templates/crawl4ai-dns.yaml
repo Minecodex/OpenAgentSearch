@@ -1,0 +1,22 @@
+{{- $dns := default dict .Values.crawl4ai.publicDns }}
+{{- if and .Values.crawl4ai.enabled $dns.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-crawl4ai-dns
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+data:
+  Corefile: |
+    {{ $dns.clusterDomain }} in-addr.arpa ip6.arpa {
+        bind 127.0.0.1
+        forward . {{ required "crawl4ai.publicDns.clusterServer must be the cluster DNS IP" $dns.clusterServer }}
+    }
+    . {
+        bind 127.0.0.1
+        ready :8181
+        errors
+        forward . tls://{{ $dns.upstream }} {
+            tls_servername {{ $dns.tlsServerName }}
+        }
+    }
+{{- end }}

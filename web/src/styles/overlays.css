@@ -1,0 +1,164 @@
+.atlas-modal-layer {
+  --modal-width: clamp(600px, 45vw, 768px);
+  --edge: clamp(12px, 2vw, 32px);
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: var(--edge);
+  background: var(--veil);
+  backdrop-filter: blur(3px);
+}
+.atlas-modal-layer[data-layout="wide"] {
+  --modal-width: clamp(720px, 57vw, 1080px);
+}
+.atlas-modal-layer[data-layout="confirm"] {
+  --modal-width: 435px;
+  z-index: 110;
+  backdrop-filter: none;
+}
+.atlas-modal-layer > .atlas-modal-container {
+  position: static;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  width: min(100%, var(--modal-width));
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  max-height: 100%;
+  padding: 0;
+  margin: 0;
+}
+.atlas-modal-container > .oas-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  max-height: calc(100dvh - 2 * var(--edge));
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 24px 84px rgb(var(--shadow-ink) / 24%);
+  outline: none;
+}
+.atlas-modal-container .dialog-head,
+.atlas-modal-container .form-actions,
+.atlas-modal-container [data-slot="alert-dialog-header"],
+.atlas-modal-container [data-slot="alert-dialog-footer"] {
+  flex: none;
+  margin: 0;
+  padding: 15px 24px;
+  background: var(--surface);
+}
+.atlas-modal-container .dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.atlas-modal-container .dialog-head h2,
+.atlas-modal-container [data-slot="alert-dialog-heading"] {
+  font-size: var(--type-dialog);
+  font-weight: var(--weight-heading);
+  line-height: 1.35;
+  padding: 0;
+}
+.atlas-modal-container .dialog-body,
+.atlas-modal-container [data-slot="alert-dialog-body"] {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  padding: 20px 24px;
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.6;
+  container-type: inline-size;
+}
+.atlas-modal-container .oas-dialog > .form-actions,
+.atlas-modal-container [data-slot="alert-dialog-footer"] {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+}
+.atlas-modal-container [data-slot="alert-dialog-header"] {
+  padding-top: 24px;
+  padding-bottom: 0;
+}
+.atlas-modal-container [data-slot="alert-dialog-body"] {
+  color: var(--muted);
+}
+.atlas-modal-container .form-actions .primary {
+  min-width: 84px;
+}
+.atlas-modal-container .dialog-head > .button {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  color: var(--muted);
+}
+.atlas-modal-container .dialog-head > .button:hover {
+  background: var(--hover);
+}
+.oas-button.destructive {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--danger-foreground, white);
+}
+.project-form.form-stack {
+  gap: 16px;
+}
+.project-form .form-grid {
+  gap: 14px 18px;
+}
+.project-form .form-section {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 630;
+}
+.project-form .form-section:not(:first-child) {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.project-form .project-pools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.project-form .pool-builder {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px 14px;
+}
+.project-form .check-row {
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .atlas-modal-layer {
+    --edge: max(8px, env(safe-area-inset-left), env(safe-area-inset-right));
+  }
+  .atlas-modal-container .dialog-head,
+  .atlas-modal-container .form-actions,
+  .atlas-modal-container [data-slot="alert-dialog-header"],
+  .atlas-modal-container [data-slot="alert-dialog-footer"] {
+    padding-inline: 16px;
+  }
+  .atlas-modal-container .dialog-body,
+  .atlas-modal-container [data-slot="alert-dialog-body"] {
+    padding: 16px;
+  }
+}

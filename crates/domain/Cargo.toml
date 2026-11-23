@@ -1,0 +1,15 @@
+[package]
+name = "oas-domain"
+version.workspace = true
+edition.workspace = true
+[dependencies]
+icu_locale_core = { version = "2", features = ["alloc"] }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+url.workspace = true
+scraper.workspace = true
+pulldown-cmark.workspace = true
+ammonia.workspace = true
+tiktoken-rs = "0.12.1"

@@ -2,8 +2,15 @@ $schema: https://json-schema.org/draft/2020-12/schema
 title: EndpointCall
 type: object
 properties:
+  stage: {type: string, minLength: 1}
+  estimated_input_tokens: {type: integer, minimum: 0, description: 发送前对完整提示词的计数。}
+  input_tokens: {type: integer, minimum: 0, description: 上游确认的实际输入 Token；未提供时省略。}
+  output_tokens: {type: integer, minimum: 0, description: 上游确认的实际输出 Token；未提供时省略。}
   browser_job: {$ref: ./browser-job.schema.yaml}
   call_id: {type: string, minLength: 1}
+  candidate_id: {type: string, minLength: 1}
+  source_id: {type: string, minLength: 1}
+  error_code: {type: string, minLength: 1, description: 执行或结果验证失败原因；不与路由 reason 混用。}
   span_id: {type: [string, 'null']}
   variant_id: {type: string, minLength: 1, description: 本次检索尝试所属的查询变体。}
   score_batch_id: {type: string, minLength: 1, description: 本次评分尝试所属的逻辑批次，重试沿用同一 ID。}

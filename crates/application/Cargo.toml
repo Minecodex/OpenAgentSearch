@@ -1,0 +1,14 @@
+[package]
+name = "oas-application"
+version.workspace = true
+edition.workspace = true
+[dependencies]
+oas-domain.workspace = true
+oas-runtime.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+futures.workspace = true

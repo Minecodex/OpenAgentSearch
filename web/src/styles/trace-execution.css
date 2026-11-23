@@ -1,0 +1,30 @@
+.execution-tabs { margin: 16px 0; min-width: 0; width: 100%; }
+.execution-tabs > .execution-tab-container { width: 100%; max-width: 100%; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.execution-tabs > .execution-tab-container > .tabs__list-container__scroller { border-radius: 0; }
+.execution-tabs .execution-tab-list { display: flex; flex-wrap: nowrap; gap: 12px; width: max-content; min-width: 100%; max-width: none; height: auto; align-items: stretch; background: none; padding: 0; border: 0; border-radius: 0; }
+.execution-tabs .execution-tab { display: block; flex: 0 0 210px; width: 210px; min-width: 0; min-height: 82px; height: auto; white-space: normal; padding: 10px 8px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; text-align: start; color: var(--ink); background: transparent; }
+.execution-tabs .execution-tab[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--ink); background: transparent; }
+.execution-tabs .execution-tab .tabs__indicator { display: none; }
+.execution-tab-content { position: relative; z-index: 1; display: grid; grid-template-columns: auto minmax(0, 1fr); width: 100%; gap: 6px; text-align: start; }
+.execution-tab-number { font-size: 12px; color: var(--muted); }
+.execution-tab-title { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; font-size: 12px; }
+.execution-tab-meta { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.execution-tabs > [role="tabpanel"] { margin-top: 18px; }
+.web-material-title { margin-bottom: 6px; overflow-wrap: anywhere; }
+.web-material-page > .source-address { margin-bottom: 16px; }
+.candidate-scoring .data-table { table-layout: fixed; }
+.candidate-scoring .data-table th:first-child { width: 92px; }
+.candidate-scoring .data-table th:nth-child(2) { width: 42%; }
+.candidate-scoring .data-table td { white-space: normal; overflow-wrap: anywhere; }
+.candidate-scoring .source-address { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.candidate-scoring [data-evidence-selected="true"] { background: var(--good-bg); }
+.candidate-scoring [data-evidence-selected="true"] strong { color: var(--good); }
+.candidate-selected { display: inline-flex; align-items: center; border-radius: 6px; padding: 4px 7px; color: var(--good); background: var(--good-bg); font-weight: 650; white-space: nowrap; }
+.material-preview { min-width: 0; margin: 16px 0; }
+.material-preview .replay-frame { height: clamp(390px, 62dvh, 820px); width: 100%; max-width: 100%; }
+.material-preview .code-box { max-height: 620px; overflow: auto; }
+.material-preview .model-replay { max-height: 520px; }
+@media(max-width: 650px) {
+  .execution-tabs .execution-tab { width: 190px; flex: 0 0 190px; }
+  .candidate-scoring .data-table { min-width: 640px; }
+}

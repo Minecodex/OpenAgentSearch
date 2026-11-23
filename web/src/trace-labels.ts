@@ -1,0 +1,75 @@
+type Translate = (zh: string, en: string) => string;
+export const traceFields: Record<string, [string, string]> = {
+  normalization: ["结果判定", "Result interpretation"],
+  cards: ["搜索页卡片", "Search-page cards"],
+  content: ["内容", "Content"],
+  search_readiness: ["搜索材料就绪情况", "Search material readiness"],
+  return_reason: ["返回原因", "Return reason"],
+  elapsed_ms: ["耗时（毫秒）", "Elapsed (ms)"],
+  answer_state: ["AI 回答状态", "AI answer state"],
+  card_count: ["普通卡片数", "Ordinary card count"],
+  material_pending: ["材料正在生成", "Material generating"],
+  material_discovering: ["正在发现材料", "Discovering material"],
+  source_count: ["引用来源数", "Citation source count"],
+  variant_id: ["查询变体", "Query variant"],
+  variant_ids: ["命中变体", "Query variants"],
+  reason: ["处理原因", "Processing reason"],
+  mode: ["总结方式", "Synthesis strategy"],
+  passages: ["段落分析结果", "Passage assessments"],
+  local_time: ["服务本地时间", "Service-local time"],
+  source: ["来源处理", "Source preparation"],
+  id: ["标识", "Identifier"],
+  kind: ["材料类型", "Material type"],
+  state: ["记录状态", "Recording state"],
+  status: ["执行状态", "Execution status"],
+  selected: ["是否选中", "Selected"],
+  selection_reason: ["选材原因", "Selection reason"],
+  material: ["材料来源", "Material origin"],
+  material_reason: ["材料处理原因", "Material reason"],
+  start_char: ["起始字符", "Start character"],
+  end_char: ["结束字符", "End character"],
+  cited: ["是否引用", "Cited"],
+  call_id: ["调用标识", "Call identifier"],
+  call_ids: ["调用记录", "Calls"],
+  rank: ["原始排名", "Original rank"],
+  ranks: ["命中排名", "Hit ranks"],
+  references: ["引用段落", "Referenced passages"],
+  score_batch_id: ["评分批次", "Score batch"],
+  score_call_id: ["评分调用", "Scoring call"],
+  reader_call_ids: ["取文尝试", "Reader attempts"],
+  input_tokens: ["输入词元数", "Input tokens"],
+  output_tokens: ["输出词元数", "Output tokens"],
+  query_count: ["查询数量", "Query count"],
+  model: ["模型", "Model"],
+  tokenizer: ["分词器", "Tokenizer"],
+  reasoning_effort: ["推理强度", "Reasoning effort"],
+  driver: ["浏览器驱动", "Browser driver"],
+  webdriver: ["自动化标记（webdriver）", "Automation flag (webdriver)"],
+  page_webdriver: ["页面自动化标记", "Page automation flag"],
+  max_input_tokens: ["输入词元上限", "Maximum input tokens"],
+  max_output_tokens: ["输出词元上限", "Maximum output tokens"],
+};
+const values: Record<string, Record<string, [string, string]>> = {
+  normalization: {no_relevant_passages:["全部段落无相关证据，返回空结果","No relevant passages; returned empty"]},
+  answer_state: {none:["未发现","Not found"],pending:["未完成或缺少引用","Incomplete or missing citations"],ready:["已完成","Complete"]},
+  return_reason: {ai_answer_ready:["AI 回答已完成并稳定","AI answer complete and stable"],material_ready:["搜索材料已就绪","Search material ready"],deadline_material:["预算到期，交付已有材料","Budget reached; returning available material"]},
+  driver: {native_messaging:["Firefox 扩展与 Native Messaging","Firefox extension and Native Messaging"]},
+  mode: {whole_sources:["原文一次性总结","Single synthesis from original sources"],batched:["分批总结","Batched synthesis"]},
+  time_range: {day:["最近一天","Past day"],month:["最近一月","Past month"],year:["最近一年","Past year"]},
+  kind: {body:["网页正文","Article text"],snippet:["搜索简介","Search snippet"],model:["模型往返","Model exchange"],webpage:["网页归档","Archived webpage"]},
+  material: {reader_body:["网页正文","Article body"],inline_body:["搜索随附正文","Inline article"],snippet:["搜索简介回退","Snippet fallback"]},
+  state: {complete:["完整","Complete"],partial:["部分缺失","Partial"],missing:["未记录","Missing"],unavailable:["不可用","Unavailable"]},
+  status: {success:["成功","Success"],error:["失败","Failed"],partial:["部分完成","Partial"],empty:["无结果","Empty"],running:["运行中","Running"],cancelled:["已取消","Cancelled"]},
+  selection_reason: {selected:["已选中","Selected"],unscored:["未评分","Unscored"],irrelevant:["不相关","Irrelevant"],source_limit:["超出来源上限","Beyond source limit"]},
+  reason: {irrelevant_passages:["未发现相关段落","No relevant passages"],analysis_failed:["段落分析失败","Passage analysis failed"],native_service_did_not_supply_layout_resources:["上游未提供布局资源","Upstream did not provide layout assets"]},
+};
+export function traceValue(field: string, value: unknown, t: Translate): string {
+  if (value == null) return "—";
+  if (typeof value === "boolean") return value ? t("是","Yes") : t("否","No");
+  const raw = String(value);
+  if ((field === "variant_id" || field === "variant_ids") && /^Q\d+$/.test(raw)) {
+    return raw === "Q0" ? t("原问题","Original query") : t("改写 ","Variant ") + raw.slice(1);
+  }
+  const label = values[field]?.[raw];
+  return label ? t(...label) : raw;
+}

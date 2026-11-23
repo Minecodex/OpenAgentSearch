@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["images", "publicOrigin", "browser", "history", "service", "credentials", "postgres", "searxng", "crawl4ai"],
+  "properties": {
+    "publicOrigin": {"type":"string","pattern":"^https?://[^/]+$"},
+    "history": {"type":"object","required":["retentionDays"],"properties":{"retentionDays":{"type":"integer","minimum":1,"maximum":36500}}},
+    "browser": {"type":"object","required":["replicas","slots"],"properties":{"replicas":{"type":"integer","minimum":0,"maximum":100},"slots":{"type":"integer","minimum":1,"maximum":64}}},
+    "credentials": {"type":"object","properties":{
+      "existingSecret":{"type":"string"}, "adminUsername":{"type":"string","minLength":1},
+      "adminPassword":{"type":"string","pattern":"^$|^.{8,}$"},
+      "masterKey":{"type":"string","pattern":"^$|^[a-fA-F0-9]{64}$"},
+      "workerKey":{"type":"string","pattern":"^$|^.{24,}$"}
+    }},
+    "service":{"type":"object","required":["type","port"],"properties":{"type":{"enum":["ClusterIP","NodePort","LoadBalancer"]},"port":{"type":"integer","minimum":1,"maximum":65535}}},
+    "images":{"type":"object","required":["api","web","browser"],"additionalProperties":{"type":"object","required":["repository","tag","pullPolicy"],"properties":{"repository":{"type":"string","minLength":1},"tag":{"type":"string","minLength":1},"pullPolicy":{"enum":["Always","IfNotPresent","Never"]}}}},
+    "searxng":{"type":"object","required":["enabled","image"],"properties":{"enabled":{"type":"boolean"},"image":{"type":"string","minLength":1}}},
+    "crawl4ai":{"type":"object","required":["enabled","image"],"properties":{
+      "enabled":{"type":"boolean"},"image":{"type":"string","minLength":1},
+      "publicDns":{"type":"object","additionalProperties":false,"properties":{
+        "enabled":{"type":"boolean"},"image":{"type":"string","minLength":1},
+        "upstream":{"type":"string","format":"ipv4"},
+        "tlsServerName":{"type":"string","format":"hostname"},
+        "clusterDomain":{"type":"string","format":"hostname"},
+        "clusterServer":{"anyOf":[{"const":""},{"type":"string","format":"ipv4"}]}
+      },"if":{"properties":{"enabled":{"const":true}},"required":["enabled"]},
+      "then":{"required":["image","upstream","tlsServerName","clusterDomain","clusterServer"],"properties":{"clusterServer":{"minLength":1}}}}
+    }},
+    "postgres":{"type":"object","required":["image","storage"],"properties":{"image":{"type":"string","minLength":1},"storage":{"type":"string","pattern":"^[1-9][0-9]*(Mi|Gi|Ti)$"},"password":{"type":"string"}}}
+  }
+}

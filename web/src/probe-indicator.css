@@ -1,0 +1,8 @@
+.availability-line { display: flex; align-items: center; gap: .4rem; }
+.probe-indicator { display: inline-flex; align-items: center; justify-content: center; padding: .25rem; border-radius: 50%; cursor: help; background: transparent; }
+.probe-indicator.reachable { color: var(--success); }
+.probe-indicator.unreachable { color: var(--warn); }
+.probe-indicator.pending { color: var(--muted); }
+.probe-indicator:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.probe-tooltip { max-width: min(23rem, calc(100vw - 2rem)); padding: .8rem; font-size: .8rem; line-height: 1.6; }
+.probe-tooltip p { margin: .3rem 0 0; }

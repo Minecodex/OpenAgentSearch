@@ -20,14 +20,14 @@ flowchart TD
     Ops["运维通过 Helm 或 oasctl 调整副本"] --> K8s["Kubernetes"]
     K8s -->|就绪、扩缩容、终止| API
     Jobs -->|按任务独占的浏览器上下文| Exit["已分配的 SOCKS5 或 HTTPS 代理"]
-    Jobs -->|项目未绑定代理| Direct["Firefox Pod 默认网络"]
+    Jobs -->|项目未绑定代理| Direct["可用 VPN 或 Pod 默认网络"]
     Exit --> Web["公开网页"]
     Direct --> Web
     Search --> Web
     Read --> Web
 ```
 
-PostgreSQL 保存项目配置、凭据密文、请求证据和调用统计。基础 Helm 安装部署前端服务、Rust API、PostgreSQL 和 Firefox 执行器。前端与 API 独立部署，通过同一站点对外提供服务。Rust 直接请求配置的原生上游。项目绑定代理池时 Firefox 走分配到的 SOCKS5/HTTPS 代理，未绑定时使用 Pod 默认网络。[安装与升级](12-oasctl-and-helm.md)
+PostgreSQL 保存项目配置、凭据密文、请求证据和调用统计。基础 Helm 安装部署前端服务、Rust API、PostgreSQL 和 Firefox 执行器。前端与 API 独立部署，通过同一站点对外提供服务。Rust 直接请求配置的原生上游。项目绑定代理池时 Firefox 走分配到的 SOCKS5/HTTPS 代理，未绑定时自动选择合格 VPN 或 Pod 默认网络。[安装与升级](12-oasctl-and-helm.md)
 
 <a id="browser-discovery"></a>
 
@@ -104,6 +104,6 @@ flowchart TD
     Drain --> Closed["关闭连接、释放锁"]
 ```
 
-`GET /health/live` 检查进程能否响应。`GET /health/ready` 以必需数据库和调度所有权为准，返回 `ready` 或 HTTP 503 的 `not_ready`。搜索源、正文服务、浏览器和观测队列分别报告状态。业务用例检查自己依赖的能力。数据持久化使用 UTC，耗时与预算使用单调时钟。
+`GET /health/live` 检查进程能否响应。`GET /health/ready` 以必需数据库和调度所有权为准，返回 `ready` 或 HTTP 503 的 `not_ready`。搜索源、正文服务、浏览器和观测队列分别报告状态。业务用例检查自己依赖的能力。重启时登记未确认结束的浏览器作业，隔离对应实例并继续占用其代理名额；后台按原 owner 确认关闭或 Pod 已销毁后恢复容量。这些作业不会阻塞其他就绪实例及原生 HTTP 能力。数据持久化使用 UTC，耗时与预算使用单调时钟。
 
 综合总结进入用例时固定项目配置和调用方给出的改写上下文。调度截止和统计窗口使用执行时钟，改写中的相对日期使用调用方保留偏移的时间字符串。两者独立进入各自的处理阶段。[改写上下文字段](02-business-api.md#rewrite-context)
