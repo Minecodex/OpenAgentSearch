@@ -8,6 +8,10 @@ OpenAgentSearch 提供三个同步业务接口。调用方可以搜索网页列�
 
 运行历史采用全局统一保留期，默认 7 天。修改后，所有项目的新请求、完整材料、明细及其统计贡献统一采用新天数，已有记录按原定时间到期。请求详情可在隔离 iframe 中回放归档网页的原布局，并渲染 Markdown 材料。[历史保留与回放](plan1/06-observability.md#layout-replay)
 
+## Plan 2 搜索缓存规划
+
+Plan 2 使用系统统一的多语言 embedding 和 Qdrant 召回历史问题，缓存由内置浏览器取材。同页的多份标题和短简介按当前问题择优，公开列表只做排序，按有效 `count` 最多给 10 条，综合只取相关来源。浏览器页级 `summary` 使用网页原文语言，超长页只读开头，长度由环境变量控制。DeepSeek 的非空 `summary` 原值传递。检索故障时支持原问精确降级。后台并发、队满淘汰和磁盘水位由独立缓存管理页观测。[请求与页面身份](plan2/README.md#page-identity) · [简介长度配置](plan2/README.md#page-summary-budget) · [双热点](plan2/01-hotness.md) · [Qdrant 与容量回收](plan2/02-index-selection.md#eviction) · [缓存管理页面](plan2/03-cache-console.md)
+
 ## 从哪里开始
 
 | 要实现的部分 | 设计入口 |
