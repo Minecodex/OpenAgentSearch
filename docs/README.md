@@ -10,7 +10,9 @@ OpenAgentSearch 提供三个同步业务接口。调用方可以搜索网页列�
 
 ## Plan 2 搜索缓存规划
 
-Plan 2 使用系统统一的多语言 embedding 和 Qdrant 召回历史问题，缓存由内置浏览器取材。同页的多份标题和短简介按当前问题择优，公开列表只做排序，按有效 `count` 最多给 10 条，综合只取相关来源。浏览器页级 `summary` 使用网页原文语言，超长页只读开头，长度由环境变量控制。DeepSeek 的非空 `summary` 原值传递。检索故障时支持原问精确降级。后台并发、队满淘汰和磁盘水位由独立缓存管理页观测。[请求与页面身份](plan2/README.md#page-identity) · [简介长度配置](plan2/README.md#page-summary-budget) · [双热点](plan2/01-hotness.md) · [Qdrant 与容量回收](plan2/02-index-selection.md#eviction) · [缓存管理页面](plan2/03-cache-console.md)
+Plan 2 用统一 embedding 与 Qdrant 复用历史问题，保存各来源已经取得的原始列表和完整正文。额外补文只针对本次实际返回的 Top K 或综合选用的 Top N，未入选原始候选保留已有材料，定时列表刷新不预取整榜正文。本期采用可配置的固定列表/正文 TTL，AI 页面分类及不同类型的 TTL 留作后续扩展。两个高置信问题命中继续按既有规则执行。[数量与按需补文](plan2/README.md#counts) · [当前固定 TTL](plan2/README.md#cache-ttl) · [双热点](plan2/01-hotness.md) · [缓存管理](plan2/03-cache-console.md)
+
+缓存模块通过稳定入口装配唯一活动的 Handler，切换直接采用新缓存空间，旧版本任务不执行且不复活。后台每轮派发使用最新配置，任务和存储读写共用一致性执行层。[Handler 架构](plan2/04-cache-architecture.md)
 
 ## 从哪里开始
 
