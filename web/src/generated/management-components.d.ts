@@ -253,6 +253,12 @@ export interface components {
              */
             summary_snippets_only: boolean;
             allow_snippets?: boolean;
+            /**
+             * @description 是否启用本项目的列表与正文缓存。
+             * @default false
+             */
+            cache_enabled: boolean;
+            cache_policy?: components["schemas"]["ProjectCachePolicy"];
         } & unknown;
         ProjectUpdate: {
             name: string;
@@ -276,6 +282,12 @@ export interface components {
              */
             summary_snippets_only: boolean;
             allow_snippets: boolean;
+            /**
+             * @description 是否启用本项目的列表与正文缓存。
+             * @default false
+             */
+            cache_enabled: boolean;
+            cache_policy?: components["schemas"]["ProjectCachePolicy"];
             expected_version: number;
         } & unknown;
         ProjectFields: {
@@ -300,6 +312,14 @@ export interface components {
              */
             summary_snippets_only: boolean;
             allow_snippets: boolean;
+            /**
+             * @description 是否启用本项目的列表与正文缓存。
+             * @default false
+             */
+            cache_enabled: boolean;
+            cache_policy?: components["schemas"]["ProjectCachePolicy"];
+            readonly cache_epoch?: number;
+            readonly cache_access_epoch?: number;
             /** Format: uuid */
             id: string;
             version: number;
@@ -352,7 +372,7 @@ export interface components {
             model_calls: number;
             incomplete: boolean;
             /** @enum {unknown} */
-            origin: "business" | "debug" | "endpoint_test" | "proxy_test";
+            origin: "business" | "debug" | "endpoint_test" | "proxy_test" | "cache_background";
             project_name: string | null;
             language: string | null;
             /** @description 问题或 URL。独立测试显示当时记录的资源名称。 */
@@ -408,6 +428,7 @@ export interface components {
         };
         ReplayMaterial: components["schemas"]["replay-material.schema"];
         TraceSnapshot: {
+            cache?: components["schemas"]["CacheBinding"];
             project: components["schemas"]["RecordedProject"];
             routes_version: number;
             endpoints: {
@@ -436,6 +457,7 @@ export interface components {
                 /** Format: uri */
                 url: string;
                 rank: number;
+                cache?: components["schemas"]["cache-origin.schema"];
             }[];
             relevant: boolean | null;
             score: number | null;
@@ -446,7 +468,7 @@ export interface components {
             source_id: string | null;
             material_reason?: string;
             /** @enum {unknown} */
-            material: "reader_body" | "inline_body" | "search_snippet" | "snippet" | null;
+            material: "cache_body" | "reader_body" | "inline_body" | "search_snippet" | "snippet" | null;
             reader_call_ids?: string[];
             article_preview?: string | null;
             lengths?: {
@@ -473,6 +495,49 @@ export interface components {
                 summary: string;
                 cited: boolean;
                 text_preview?: string | null;
+            }[];
+            cache_lookups?: {
+                degraded: boolean;
+                bypass: boolean;
+                hit: boolean;
+                search_needed: boolean;
+                verification?: {
+                    profile: string;
+                    /** @enum {unknown} */
+                    state: "no_candidates" | "verified" | "uncalibrated" | "material_changed" | "fallback";
+                    shortlisted_question_ids?: string[];
+                    /** @description 按送审问题标识保存当次历史问句。 */
+                    question_texts?: {
+                        [key: string]: string;
+                    };
+                    elapsed_ms: number | null;
+                    reason: string | null;
+                    threshold: number | null;
+                    decisions: {
+                        question_id: string;
+                        /** @enum {unknown} */
+                        label: "reusable" | "insufficient" | "conflict";
+                        reusable_score: number;
+                    }[];
+                };
+                lookup_id: string;
+                /** @description 本次读取所属执行阶段 */
+                span_id?: string;
+                /** @description 本次实际检索的问句 */
+                query?: string;
+                matched_snapshots?: {
+                    snapshot_id: string;
+                    question_id: string;
+                    /** @description 采集这份快照时使用的历史问句 */
+                    query: string;
+                    exact: boolean;
+                    /** @description 采集来源接入点标识 */
+                    source: string;
+                    /** @description 快照采集时间戳（毫秒） */
+                    collected_at: number;
+                }[];
+                questions: string[];
+                snapshot_ids: string[];
             }[];
         };
         Export: {
@@ -516,6 +581,167 @@ export interface components {
             data: unknown;
             warnings: components["schemas"]["Message"][];
             error: null;
+        };
+        CacheHotPolicy: {
+            total_hot_percent: number;
+            recent_hot_percent: number;
+            recent_window_hours: number;
+        };
+        ProjectCachePolicy: {
+            list?: components["schemas"]["CacheHotPolicy"] | null;
+            content?: components["schemas"]["CacheHotPolicy"] | null;
+        } | null;
+        CacheBinding: {
+            handler: string;
+            namespace: string;
+            activation: number;
+        };
+        CacheRate: {
+            hits: number;
+            total: number;
+            rate: number | null;
+        };
+        CacheCapacity: {
+            configured_limit: number;
+            effective_limit: number;
+            ready_tabs: number;
+            background_active: number;
+            foreground_active: number;
+            foreground_waiting: number;
+            model_concurrency: number;
+            model_rpm: number;
+            capacity_insufficient: boolean;
+        };
+        CacheConcurrencyView: {
+            configured_limit: number;
+            effective_limit: number;
+            ready_tabs: number;
+            background_active: number;
+            foreground_active: number;
+            foreground_waiting: number;
+            model_concurrency: number;
+            model_rpm: number;
+            capacity_insufficient: boolean;
+            version: number;
+        };
+        CacheConcurrencyWrite: {
+            configured_limit: number;
+            expected_version: number;
+        };
+        CachePolicyView: {
+            list: components["schemas"]["CacheHotPolicy"];
+            content: components["schemas"]["CacheHotPolicy"];
+            version: number;
+        };
+        CachePolicyWrite: {
+            list: components["schemas"]["CacheHotPolicy"];
+            content: components["schemas"]["CacheHotPolicy"];
+            expected_version: number;
+        };
+        CacheModelBudgetView: {
+            concurrency: number;
+            rpm: number;
+            version: number;
+        };
+        CacheModelBudgetWrite: {
+            concurrency: number;
+            rpm: number;
+            expected_version: number;
+        };
+        CacheTask: {
+            id: string;
+            project: string;
+            kind: string;
+            target: string;
+            reason: string;
+            state: string;
+            parent: string;
+            origin: string;
+            operation: string;
+            handler_version: string;
+            cache_namespace: string;
+            project_name: string | null;
+            input: Record<string, never>;
+            activation_id: number;
+            project_cache_epoch: number;
+            payload_version: number;
+            attempts: number;
+            attempt_limit: number;
+            execution_request: string | null;
+            merged: number;
+            created_at: number;
+            deadline: number;
+            available_at: number;
+            finished_at: number | null;
+            last_error: string | null;
+            phases: Record<string, never>[];
+        };
+        CacheTasks: {
+            items: components["schemas"]["CacheTask"][];
+            next_cursor: number | null;
+        };
+        CacheOverview: {
+            as_of: number;
+            since: number;
+            scope: string | null;
+            inventory: {
+                questions: number;
+                snapshots: number;
+                pages: number;
+                summaries: number;
+            };
+            list: components["schemas"]["CacheRate"];
+            content: components["schemas"]["CacheRate"];
+            outcomes: {
+                [key: string]: number;
+            };
+            states: {
+                [key: string]: number;
+            };
+            queue: {
+                waiting: number;
+                oldest_ms: number;
+                p95_ms: number;
+                capacity: number;
+            };
+            traffic: {
+                created: number;
+                completed: number;
+                evicted: number;
+                ignored: number;
+                attempts: number;
+                per_minute: number;
+            };
+            /** @constant */
+            statistics: "recorded_samples";
+            browser: components["schemas"]["CacheCapacity"];
+            binding: components["schemas"]["CacheBinding"];
+            matcher?: {
+                configured: boolean;
+                profile: string;
+            };
+            embedding: {
+                configured: boolean;
+                version: string;
+                ready: boolean;
+            };
+            objects: {
+                configured: boolean;
+            };
+            storage: {
+                as_of: number;
+                object_bytes: number;
+                max_object_bytes: number;
+                snapshots: number;
+                max_snapshots: number;
+                write_paused: boolean;
+            };
+            hotness: {
+                registry: number;
+                total_hot: number;
+                recent_hot: number;
+                as_of: number;
+            };
         };
         /** RuntimeDiagnosticsResponse */
         "runtime-diagnostics.schema": {
@@ -717,6 +943,8 @@ export interface components {
             }[];
         };
         SearchItem: {
+            /** @description 可选长简介，原生来源直接传递，页级简介使用网页原语言。 */
+            summary?: string;
             /**
              * Format: uri
              * @description 结果网页地址。
@@ -964,6 +1192,14 @@ export interface components {
                 }[] | null;
             };
         };
+        /** CachedOrigin */
+        "cache-origin.schema": {
+            lookup_id: string;
+            snapshot_id: string;
+            call_id: string;
+            source: string;
+            collected_at: number;
+        };
         /** SearchVariantEvidence */
         "search-variant.schema": {
             variant_id: string;
@@ -982,7 +1218,10 @@ export interface components {
                 snippet: string;
                 rank: number;
                 call_id: string;
+                cache?: components["schemas"]["cache-origin.schema"];
             }[] | null;
+            /** @description 当前缓存读取标识；缓存命中时不伪造接入点调用。 */
+            cache_lookup_id?: string;
         };
         "character-lengths.schema": {
             text: components["schemas"]["Length"];
@@ -1025,10 +1264,11 @@ export interface components {
             model_input?: Record<string, never>;
             model_output?: Record<string, never>;
             /** @enum {unknown} */
-            task?: "rewrite" | "score" | "segments" | "compress" | "synthesis";
+            task?: "rewrite" | "score" | "segments" | "compress" | "synthesis" | "cache_summary";
             /** @description 模型消息版本；版本 4 起使用自然语言任务及参考材料块，用户消息保留原问题。 */
             prompt_version?: string;
             tokenizer?: string;
+            cache?: components["schemas"]["cache-origin.schema"];
         } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /**
          * ReplayLayout
@@ -1137,7 +1377,7 @@ export interface components {
             endpoint_version: number | null;
             operation: string;
             /** @enum {string} */
-            origin: "business" | "debug" | "endpoint_test" | "proxy_test";
+            origin: "business" | "debug" | "endpoint_test" | "proxy_test" | "cache_background";
             queue_ms: number;
             execution_ms: number;
             sent: boolean;
@@ -1229,7 +1469,7 @@ export interface components {
         Status: "running" | "success" | "partial" | "empty" | "error" | "cancelled";
         Q: string;
         RecordId: string;
-        CallOrigin: "business" | "debug" | "endpoint_test" | "proxy_test";
+        CallOrigin: "business" | "debug" | "endpoint_test" | "proxy_test" | "cache_background";
         Capability: "search" | "reader" | "model";
         BusinessLanguage: string;
         CallStatus: "success" | "partial" | "empty" | "error" | "cancelled";

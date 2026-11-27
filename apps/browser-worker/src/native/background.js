@@ -17,11 +17,12 @@ async function poll(command,read) {
 }
 function assertStatus(tab,search=false) {
   const state=pageCaptures.get(tab);
+  const fail=code=>{const error=Error(code);if(!search && state?.status){error.source_status=state.status;error.source_url=state.url;error.retry_after_ms=state.retry_after_ms;}throw error;};
   if(state?.policy)throw Error('URL_NOT_ALLOWED');
   if(state?.error)throw Error(search?'SEARCH_ENGINE_UNAVAILABLE':'CONTENT_UNAVAILABLE');
-  if(state?.status===429 || (search&&[401,403].includes(state?.status)))throw Error('ENDPOINT_RISK_CONTROL');
-  if([401,403].includes(state?.status))throw Error('ACCESS_DENIED');
-  if(state?.status>=400)throw Error(search?'SEARCH_ENGINE_UNAVAILABLE':'CONTENT_UNAVAILABLE');
+  if(state?.status===429 || (search&&[401,403].includes(state?.status)))fail('ENDPOINT_RISK_CONTROL');
+  if([401,403].includes(state?.status))fail('ACCESS_DENIED');
+  if(state?.status>=400)fail(search?'SEARCH_ENGINE_UNAVAILABLE':'CONTENT_UNAVAILABLE');
   return state;
 }
 async function home(command,args) {
@@ -136,5 +137,5 @@ async function run(command) {
 }
 nativePort.onMessage.addListener(command=>{
   command.expires=Date.now()+Math.max(1,Math.min(command.timeout_ms,45000));
-  run(command).then(result=>nativePort.postMessage({id:command.id,result}),error=>nativePort.postMessage({id:command.id,error:error.message}));
+  run(command).then(result=>nativePort.postMessage({id:command.id,result}),error=>nativePort.postMessage({id:command.id,error:error.message,details:{source_status:error.source_status,source_url:error.source_url,retry_after_ms:error.retry_after_ms}}));
 });

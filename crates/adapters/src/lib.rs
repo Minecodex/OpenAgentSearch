@@ -1,4 +1,5 @@
 mod administrators;
+pub mod cache;
 pub mod crypto;
 pub mod diagnostics;
 pub mod discovery;

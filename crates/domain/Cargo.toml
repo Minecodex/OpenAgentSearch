@@ -14,3 +14,6 @@ scraper.workspace = true
 pulldown-cmark.workspace = true
 ammonia.workspace = true
 tiktoken-rs = "0.12.1"
+sha2.workspace = true
+hex.workspace = true
+regex = "1"

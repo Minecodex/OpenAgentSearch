@@ -15,7 +15,6 @@ const googleSearch = (() => {
         if (/^https?:\/\//i.test(target)) return outbound(target);
         if (url.pathname !== '/goto' || !target) return null;
       }
-      url.hash = '';
       return url.href.length <= 2048 ? url.href : null;
     } catch (_) { return null; }
   }

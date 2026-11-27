@@ -1,0 +1,121 @@
+{{- $c := .Values.cache -}}
+{{- if $c.enabled -}}
+{{- $secret := default (printf "%s-cache-credentials" .Release.Name) $c.existingSecret -}}
+{{- if not $c.existingSecret }}
+{{- $old := lookup "v1" "Secret" .Release.Namespace $secret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secret }}
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+type: Opaque
+data:
+  qdrant-api-key: {{ if and $old (hasKey $old.data "qdrant-api-key") }}{{ index $old.data "qdrant-api-key" }}{{ else }}{{ default (randAlphaNum 48) $c.qdrant.apiKey | b64enc }}{{ end }}
+  valkey-password: {{ if and $old (hasKey $old.data "valkey-password") }}{{ index $old.data "valkey-password" }}{{ else }}{{ default (randAlphaNum 32) $c.valkey.password | b64enc }}{{ end }}
+  s3-access-key: {{ if and $old (hasKey $old.data "s3-access-key") }}{{ index $old.data "s3-access-key" }}{{ else }}{{ $c.objects.accessKey | b64enc }}{{ end }}
+  s3-secret-key: {{ if and $old (hasKey $old.data "s3-secret-key") }}{{ index $old.data "s3-secret-key" }}{{ else }}{{ default (randAlphaNum 48) $c.objects.secretKey | b64enc }}{{ end }}
+  embedding-api-key: {{ $c.embedding.apiKey | b64enc | quote }}
+---
+{{- end }}
+{{- range $kind := list "qdrant" "valkey" "objects" }}
+{{- $v := index $c $kind }}
+{{- if $v.enabled }}
+{{- $name := printf "%s-cache-%s" $.Release.Name $kind }}
+{{- $port := ternary 6333 (ternary 6379 8333 (eq $kind "valkey")) (eq $kind "qdrant") }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels: {app.kubernetes.io/instance: {{ $.Release.Name }}}
+spec:
+  selector: {app: {{ $name }}}
+  ports: [{name: client, port: {{ $port }}, targetPort: {{ $port }}}]
+---
+{{- if eq $kind "qdrant" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-headless
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app: {{ $name }}}
+  ports: [{name: peer, port: 6335, targetPort: 6335}]
+---
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels: {app.kubernetes.io/instance: {{ $.Release.Name }}}
+spec:
+  serviceName: {{ $name }}{{ if eq $kind "qdrant" }}-headless{{ end }}
+  replicas: {{ if eq $kind "qdrant" }}{{ $v.replicas }}{{ else }}1{{ end }}
+  selector: {matchLabels: {app: {{ $name }}}}
+  template:
+    metadata:
+      labels: {app: {{ $name }}, app.kubernetes.io/instance: {{ $.Release.Name }}}
+    spec:
+      {{- if and (eq $kind "qdrant") (gt (int $v.replicas) 1) }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels: {app: {{ $name }}}
+      {{- end }}
+      enableServiceLinks: false
+      securityContext: {fsGroup: 10001}
+      containers:
+        - name: {{ $kind }}
+          image: {{ $v.image | quote }}
+          ports: [{name: client, containerPort: {{ $port }}}]
+          resources: {{ toYaml $v.resources | nindent 12 }}
+          {{- if eq $kind "qdrant" }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - >-
+              uri="http://${POD_NAME}.{{ $name }}-headless.{{ $.Release.Namespace }}.svc.{{ $c.clusterDomain }}:6335";
+              if [ "$POD_NAME" = "{{ $name }}-0" ]; then exec /qdrant/qdrant --uri "$uri";
+              else exec /qdrant/qdrant --uri "$uri" --bootstrap "http://{{ $name }}-0.{{ $name }}-headless.{{ $.Release.Namespace }}.svc.{{ $c.clusterDomain }}:6335"; fi
+          env:
+            - {name: POD_NAME, valueFrom: {fieldRef: {fieldPath: metadata.name}}}
+            - {name: QDRANT__CLUSTER__ENABLED, value: "true"}
+            - {name: QDRANT__QUOTAS__ENABLED, value: "true"}
+            - {name: QDRANT__QUOTAS__MAX_DISK_USAGE_PERCENT, value: "90"}
+            - {name: QDRANT__QUOTAS__RELEASE_MARGIN_PERCENT, value: "10"}
+            - name: QDRANT__SERVICE__API_KEY
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: qdrant-api-key}}
+          readinessProbe: {httpGet: {path: /readyz, port: 6333}, initialDelaySeconds: 5}
+          volumeMounts: [{name: data, mountPath: /qdrant/storage}]
+          {{- else if eq $kind "valkey" }}
+          command: ["/bin/sh", "-ec"]
+          args: ['exec valkey-server --appendonly yes --requirepass "$VALKEY_PASSWORD"']
+          env:
+            - name: VALKEY_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: valkey-password}}
+          readinessProbe: {exec: {command: ["/bin/sh", "-ec", 'REDISCLI_AUTH="$VALKEY_PASSWORD" valkey-cli ping']}, initialDelaySeconds: 3}
+          volumeMounts: [{name: data, mountPath: /data}]
+          {{- else }}
+          args: [mini, "-dir=/data"]
+          env:
+            - {name: S3_BUCKET, value: {{ $c.objects.bucket | quote }}}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: s3-access-key}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: {{ $secret }}, key: s3-secret-key}}
+          readinessProbe: {tcpSocket: {port: 8333}, initialDelaySeconds: 3}
+          volumeMounts: [{name: data, mountPath: /data}]
+          {{- end }}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- if $v.storageClassName }}
+        storageClassName: {{ $v.storageClassName | quote }}
+        {{- end }}
+        resources: {requests: {storage: {{ $v.storage }}}}
+---
+{{- end }}
+{{- end }}
+{{- end }}

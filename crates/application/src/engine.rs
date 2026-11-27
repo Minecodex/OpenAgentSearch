@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 use std::{
     future::Future,
     sync::{Arc, Mutex},
-    time::Instant,
+    time::{Duration, Instant},
 };
 use tokio::sync::Mutex as AsyncMutex;
 use tokio_util::sync::CancellationToken;
@@ -18,6 +18,8 @@ use tokio_util::sync::CancellationToken;
 pub struct Engine {
     pub transport: Arc<dyn Transport>,
     pub scheduler: Scheduler,
+    pub cache: Option<Arc<crate::cache::CacheService>>,
+    pub background: bool,
 }
 pub struct ExecutionContext {
     pub request_id: String,
@@ -53,7 +55,16 @@ impl Drop for Browser {
     }
 }
 pub(crate) type BrowserSlot = Arc<AsyncMutex<Option<Browser>>>;
+#[derive(Clone)]
+pub(crate) struct QueryRanking {
+    pub deadline: tokio::time::Instant,
+    pub vector: Option<Vec<f32>>,
+}
 pub(crate) struct Run<'a> {
+    pub test_cache_scope: Option<oas_domain::cache::Scope>,
+    pub cache_blocked: Arc<std::sync::atomic::AtomicBool>,
+    pub full_acquired: Arc<Mutex<std::collections::BTreeSet<String>>>,
+    pub cache_ranking: Arc<Mutex<std::collections::HashMap<String, QueryRanking>>>,
     pub excluded_proxies: Arc<Mutex<std::collections::HashSet<String>>>,
     pub reselections: Arc<std::sync::atomic::AtomicUsize>,
     pub browser_blocked: Arc<std::sync::atomic::AtomicBool>,
@@ -80,7 +91,17 @@ impl Engine {
         context: ExecutionContext,
     ) -> Execution {
         let mut run = Run::new(self, &snapshot, &context);
-        if op == "summary" {
+        if snapshot.project.cache_enabled && self.cache.is_some() {
+            let mut safe = serde_json::to_value(&command).unwrap();
+            let original = safe.clone();
+            oas_domain::privacy::redact(
+                &mut safe,
+                &oas_domain::privacy::secrets(&snapshot.secrets),
+            );
+            run.cache_blocked
+                .store(safe != original, std::sync::atomic::Ordering::SeqCst);
+        }
+        if op == "summary" || self.background && op == "list" {
             if let Some(region) = &command.region {
                 run.query_context["region"] = json!(region.trim());
             }
@@ -93,8 +114,37 @@ impl Engine {
         }
         let outcome = async {
             let (span, started) = run.begin("admit", serde_json::to_value(&command).unwrap());
-            validate_command(op, &command, &snapshot.project)?;
-            let _permit = self.scheduler.admission(&run.cancel).await?;
+            if self.background && op == "list" {
+                oas_domain::validation::validate_refresh_query(&command, &snapshot.project)?;
+            } else {
+                validate_command(op, &command, &snapshot.project)?;
+            }
+            if !self.background
+                && (!snapshot.project.cache_enabled
+                    || run.cache_blocked.load(std::sync::atomic::Ordering::SeqCst))
+                && let Some(cache) = &self.cache
+            {
+                let (cache, scope, request) = (
+                    cache.clone(),
+                    oas_domain::cache::Scope::from_project(&snapshot.project),
+                    context.request_id.clone(),
+                );
+                let outcome = if snapshot.project.cache_enabled {
+                    "sensitive"
+                } else {
+                    "disabled"
+                };
+                tokio::spawn(async move {
+                    cache
+                        .usage(&scope, &request, &request, "lookup", &request, outcome)
+                        .await;
+                });
+            }
+            let _permit = if self.background {
+                None
+            } else {
+                Some(self.scheduler.admission(&run.cancel).await?)
+            };
             run.end(
                 &span,
                 "success",
@@ -121,22 +171,43 @@ impl Engine {
         snapshot: Snapshot,
         context: ExecutionContext,
     ) -> Execution {
-        let run = Run::new(self, &snapshot, &context);
+        let mut run = Run::new(self, &snapshot, &context);
+        if !self.background && self.cache.is_some() {
+            run.test_cache_scope = Some(oas_domain::cache::Scope::for_endpoint(&endpoint));
+        }
         let outcome = async {
-            let _permit = self.scheduler.admission(&context.cancel).await?;
+            let _permit = if self.background {
+                None
+            } else {
+                Some(self.scheduler.admission(&context.cancel).await?)
+            };
             let queued = Instant::now();
             let lease = if endpoint.kind == "model" {
-                run.bounded(self.scheduler.model_permit(
+                run.bounded(self.scheduler.model_permit_class(
                     &endpoint,
                     &context.request_id,
                     &context.cancel,
+                    self.background,
                 ))
                 .await?
             } else {
                 run.bounded(self.scheduler.endpoint_wait(&endpoint, &context.cancel))
                     .await?
             };
-            let output = run
+            let target = if task == "extract" {
+                input["url"]
+                    .as_str()
+                    .and_then(|u| oas_domain::cache::page_key(u, false))
+            } else {
+                None
+            };
+            let mut epoch = 0;
+            if let (Some(cache), Some(scope), Some(key)) =
+                (&self.cache, &run.test_cache_scope, &target)
+            {
+                epoch = cache.metadata.page_epoch(scope, key).await?;
+            }
+            let called = run
                 .call(
                     &endpoint,
                     task,
@@ -145,7 +216,26 @@ impl Engine {
                     lease,
                     queued.elapsed().as_millis() as u64,
                 )
-                .await?;
+                .await;
+            let mut output = match called {
+                Ok(value) => value,
+                Err(error) => {
+                    if let (Some(cache), Some(scope), Some(key)) =
+                        (&self.cache, &run.test_cache_scope, &target)
+                    {
+                        cache
+                            .record_failure(
+                                scope,
+                                key,
+                                error.details["source_url"].as_str(),
+                                &error,
+                                epoch,
+                            )
+                            .await?;
+                    }
+                    return Err(error);
+                }
+            };
             if endpoint.kind == "reader" {
                 let article = match run.article(&output.value).await {
                     Ok(article) => article,
@@ -171,6 +261,7 @@ impl Engine {
                     Some(&article),
                     None,
                 );
+                output.article = Some(article.clone());
                 run.article_length(&output.call_id, article.text().chars().count() as u64);
             }
             if endpoint.kind == "model"
@@ -182,6 +273,11 @@ impl Engine {
                     .fail_call(&output.call_id, "MODEL_FORMAT_INVALID");
                 return Err(protocol("MODEL_FORMAT_INVALID"));
             }
+            let _ = tokio::time::timeout(
+                Duration::from_millis(50),
+                run.cache_test_result(&endpoint, &input, &output),
+            )
+            .await;
             Ok::<_, Error>(success(&context.request_id, json!({"tested":true})))
         };
         let response = match tokio::time::timeout_at(context.deadline, outcome).await {
@@ -198,6 +294,10 @@ impl Engine {
 impl<'a> Run<'a> {
     fn new(engine: &'a Engine, snapshot: &'a Snapshot, context: &'a ExecutionContext) -> Self {
         Self {
+            test_cache_scope: None,
+            cache_blocked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            full_acquired: Arc::new(Mutex::new(std::collections::BTreeSet::new())),
+            cache_ranking: Arc::new(Mutex::new(std::collections::HashMap::new())),
             excluded_proxies: Arc::new(Mutex::new(std::collections::HashSet::new())),
             reselections: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
             browser_blocked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
@@ -283,6 +383,10 @@ impl<'a> Run<'a> {
 
     pub fn fork(&self) -> Self {
         Self {
+            test_cache_scope: self.test_cache_scope.clone(),
+            cache_blocked: self.cache_blocked.clone(),
+            full_acquired: self.full_acquired.clone(),
+            cache_ranking: self.cache_ranking.clone(),
             excluded_proxies: self.excluded_proxies.clone(),
             reselections: self.reselections.clone(),
             browser_blocked: self.browser_blocked.clone(),

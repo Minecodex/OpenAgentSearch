@@ -145,7 +145,11 @@ impl Repository {
                 .await
                 .map_err(|_| Error::internal())?;
             for span in &mut execution.spans {
-                if span["diagnostics"]["call_id"] == material["call_id"] {
+                let cached = material["cache"].is_object();
+                if (cached
+                    && span["diagnostics"]["cache_lookup_id"] == material["cache"]["lookup_id"])
+                    || (!cached && span["diagnostics"]["call_id"] == material["call_id"])
+                {
                     span["replay"]
                         .as_array_mut()
                         .unwrap()

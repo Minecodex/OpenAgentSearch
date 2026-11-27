@@ -29,3 +29,5 @@ aes-gcm.workspace = true
 argon2.workspace = true
 url.workspace = true
 tracing.workspace = true
+redis = { version = "1.8", features = ["tokio-rustls-comp", "cluster-async", "connection-manager"] }
+object_store = { version = "0.14", features = ["aws"] }

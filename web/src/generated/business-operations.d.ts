@@ -410,7 +410,7 @@ export interface operations {
                     "application/json": components["schemas"]["Failure"];
                 };
             };
-            /** @description 依赖或代理不可用 */
+            /** @description 依赖或代理不可用，或源站退避尚未到期。ORIGIN_RETRY_LATER 在 error.details.retry_after_ms 返回剩余毫秒数。 */
             503: {
                 headers: {
                     [name: string]: unknown;

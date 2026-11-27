@@ -1,3 +1,5 @@
+import { CacheLookupStage, CacheReadStage } from "./cache-trace";
+import { recordedSearchHits } from "./cache-trace-model";
 import { traceFields, traceValue } from "./trace-labels";
 import { rewriteView } from "./rewrite-view";
 import { testOutcome } from "./request-display";
@@ -8,7 +10,7 @@ import { DataTable } from "./ui";
 import type { Entity } from "./api";
 import { useApp } from "./state";
 import { Facts } from "./ui";
-import { MarkdownView, SearchCards } from "./search";
+import { MarkdownView, SearchCards, SearchResultRows } from "./search";
 const labels: Record<string, [string, string]> = {
   ...traceFields,
   query: ["问题", "Query"],
@@ -51,6 +53,8 @@ const stages: Record<string, [string, string]> = {
   admit: ["请求准入", "Admission"],
   rewrite: ["问题改写", "Query rewriting"],
   search: ["网页搜索", "Web search"],
+  cache_lookup:["缓存检索","Cache lookup"],
+  cache_read:["读取缓存正文","Cached article read"],
   dedup: ["候选去重", "Deduplication"],
   score: ["候选评分", "Candidate scoring"],
   materials: ["网页材料", "Webpage materials"],
@@ -154,11 +158,13 @@ export function StagePresentation({
   evidence,
   openCandidate,
   record,
+  evidenceLoading,
 }: {
   span: Entity;
   evidence: Entity;
   record: Entity;
   openCandidate: (id: string) => void;
+  evidenceLoading?: boolean;
 }) {
   const { t } = useApp();
   const stage = span.span?.stage;
@@ -180,7 +186,10 @@ export function StagePresentation({
             [t("普通卡片","Ordinary cards"),span.output?.search_readiness.card_count],
             [t("提交后耗时","Elapsed after submission"),span.output?.search_readiness.elapsed_ms+" ms"],
           ]} />}
-          <SearchCards cards={span.output?.cards || []} className="source-card" />
+      {stage === "cache_lookup"
+        ? <CacheLookupStage span={span} evidence={evidence} record={record} loading={evidenceLoading} openCandidate={openCandidate} />
+        : <SearchCards cards={span.output?.cards || []} className="source-card" />}
+      {stage === "cache_read" && <CacheReadStage span={span} evidence={evidence} record={record} openCandidate={openCandidate} />}
       {!test && stage === "rewrite" && (
         <>
         {rewrite && <Facts items={[
@@ -219,30 +228,9 @@ export function StagePresentation({
               ).size
             }
           </p>
-          {(span.output?.hits || []).map((hit: Entity, index: number) => {
-            const c = evidence.candidates?.find(
-              (c: Entity) =>
-                c.url?.split("#")[0] === hit.url?.split("#")[0] ||
-                c.hits?.some((h: Entity) => h.url === hit.url),
-            );
-            return (
-              <article className="source-card" key={index}>
-                <small>#{index + 1}</small>
-                {c ? (
-                  <button
-                    className="row-link"
-                    onClick={() => openCandidate(c.candidate_id)}
-                  >
-                    {hit.title || hit.url}
-                  </button>
-                ) : (
-                  <strong>{hit.title || hit.url}</strong>
-                )}
-                <p className="source-address">{hit.url}</p>
-                <p>{hit.snippet}</p>
-              </article>
-            );
-          })}
+          <div className="hit-list"><SearchResultRows
+            items={recordedSearchHits(span.output.hits, evidence.candidates || [])}
+            openCandidate={openCandidate} /></div>
         </>
       )}
       {!test && stage === "score" && (
@@ -287,7 +275,7 @@ export function StagePresentation({
           ))}
         </div>
       )}
-      {(test ||
+      {!(stage === "cache_lookup" || stage === "cache_read") && (test ||
         ![
           "search",
           "dedup",

@@ -53,11 +53,12 @@ impl Providers {
             let body: Value = row.get("body");
             let node: WorkerNode =
                 serde_json::from_value(body["node"].clone()).map_err(|_| Error::internal())?;
-            scheduler.recover_job(
+            scheduler.recover_job_class(
                 node,
                 row.get::<uuid::Uuid, _>("id").to_string(),
                 row.get("owner"),
                 body["proxy_id"].as_str(),
+                body["background"] == true,
             );
         }
         Ok(())
@@ -178,7 +179,7 @@ impl Providers {
             )
         })?;
         if task == "extract" && e.provider == "deepseek" && response.status().as_u16() == 403 {
-            return Err(upstream("ACCESS_DENIED", 502));
+            return Err(target_denied());
         }
         let data = decode(response).await?;
         if data["code"].as_i64().is_some_and(|n| n != 0) {
@@ -201,10 +202,17 @@ impl Providers {
                 .ok_or_else(|| upstream("SEARCH_FAILED", 502))?;
             let hits = rows
                 .iter()
-                .take(count as usize)
+                .take(if snapshot.project.cache_enabled {
+                    100
+                } else {
+                    count as usize
+                })
                 .filter_map(|row| {
                     let url = row["url"].as_str()?.to_owned();
-                    let content = if inline_body {
+                    let content = if inline_body
+                        || (snapshot.project.cache_enabled
+                            && row["raw_content"].as_str().is_some_and(|s| !s.is_empty()))
+                    {
                         row["raw_content"]
                             .as_str()
                             .or(row["content"].as_str())
@@ -215,6 +223,28 @@ impl Providers {
                     };
                     Some(Hit {
                         url,
+                        cached_summary_key: None,
+                        cache: None,
+                        summary: row["summary"]
+                            .as_str()
+                            .filter(|s| !s.trim().is_empty())
+                            .map(str::to_owned),
+                        published_at: ["published_date", "publishedDate", "date"]
+                            .iter()
+                            .filter_map(|key| row[*key].as_str())
+                            .find_map(|raw| {
+                                chrono::DateTime::parse_from_rfc3339(raw)
+                                    .or_else(|_| chrono::DateTime::parse_from_rfc2822(raw))
+                                    .ok()
+                                    .map(|t| t.timestamp_millis())
+                            }),
+                        coverage: if e.provider == "tavily"
+                            && row["raw_content"].as_str().is_some_and(|s| !s.is_empty())
+                        {
+                            oas_domain::cache::Coverage::Full
+                        } else {
+                            oas_domain::cache::Coverage::Unknown
+                        },
                         title: row["title"].as_str().unwrap_or("").into(),
                         snippet: row["snippet"]
                             .as_str()
@@ -248,7 +278,7 @@ impl Providers {
                             || reason.contains("blocked by site")
                     });
                 if denied {
-                    return Err(upstream("ACCESS_DENIED", 502));
+                    return Err(target_denied());
                 }
             }
             let row = match e.provider.as_str() {
@@ -264,8 +294,26 @@ impl Providers {
                         .and_then(|a| a.first())
                         .cloned()
                         .ok_or_else(|| upstream("CONTENT_UNAVAILABLE", 502))?;
-                    if row["status_code"] == 401 || row["status_code"] == 403 {
-                        return Err(upstream("ACCESS_DENIED", 502));
+                    if let Some(status) = row["status_code"]
+                        .as_u64()
+                        .filter(|s| (400..600).contains(s))
+                    {
+                        let mut error = if matches!(status, 401 | 403) {
+                            target_denied()
+                        } else {
+                            upstream("CONTENT_UNAVAILABLE", 502)
+                        };
+                        if !error.details.is_object() {
+                            error.details = Box::new(json!({}));
+                        }
+                        error.details["source_status"] = json!(status);
+                        error.details["source_url"] = json!(
+                            row["redirected_url"]
+                                .as_str()
+                                .or(row["url"].as_str())
+                                .unwrap_or(url)
+                        );
+                        return Err(error);
                     }
                     if row["success"] != true {
                         return Err(upstream("CONTENT_UNAVAILABLE", 502));
@@ -296,6 +344,17 @@ impl Providers {
                 "text/markdown"
             };
             let mut output = json!({"body":body,"media_type":media,"title":row["title"].as_str().or(row["metadata"]["title"].as_str()).unwrap_or("")});
+            output["_coverage"] = json!(
+                if row["truncated"] == true || row["coverage"] == "excerpt" {
+                    "excerpt"
+                } else if row["coverage"] == "full"
+                    || matches!(e.provider.as_str(), "tavily" | "deepseek" | "crawl4ai")
+                {
+                    "full"
+                } else {
+                    "unknown"
+                }
+            );
             if media == "text/html" {
                 output["layout"] = oas_domain::archive::native_layout(body);
             } else if let Some(html) = row["html"].as_str().filter(|s| !s.is_empty()) {
@@ -365,6 +424,9 @@ impl Providers {
 }
 #[async_trait]
 impl Transport for Providers {
+    async fn validate_read_target(&self, url: &str) -> Result<()> {
+        validate_target(url).await
+    }
     async fn validate(&self, e: &Endpoint) -> Result<()> {
         let current = self.repo.resource("endpoints", &e.id).await?;
         if current["version"].as_i64() != Some(e.version)
@@ -402,7 +464,7 @@ impl Transport for Providers {
             dispatch,
         } = invocation;
         let input = &prepared.input;
-        if e.browser() {
+        let result = if e.browser() {
             let session = session.ok_or_else(Error::unavailable)?;
             let command = WorkerCommand {
                 job_id: session["job_id"].as_str().unwrap().into(),
@@ -423,13 +485,29 @@ impl Transport for Providers {
                 count: input["count"].as_u64().unwrap_or(10) as usize,
                 proxy: None,
             };
-            tokio::select! {_=cancel.cancelled()=>Err(Error::cancelled()),r=self.worker_dispatch(session["node"]["address"].as_str().unwrap(),&command,Some(dispatch))=>r}
+            let value = tokio::select! {_=cancel.cancelled()=>Err(Error::cancelled()),r=self.worker_dispatch(session["node"]["address"].as_str().unwrap(),&command,Some(dispatch))=>r};
+            value.map(|mut value| {
+                if e.kind == "reader" {
+                    // The content script bounds the complete main element. Only
+                    // the separate layout archive can be byte-truncated.
+                    value["_coverage"] = json!("full");
+                }
+                value
+            })
         } else {
             tokio::select! {_=cancel.cancelled()=>Err(Error::cancelled()),value=self.native(e,task,input,snapshot,prepared,dispatch)=>value}
-        }
+        };
+        result.map_err(|mut error| {
+            if oas_domain::cache::OriginObservation::from_error(&error).is_some() {
+                error.details["collected_at"] = json!(dispatch.collected_at());
+                error.details["acquisition_order"] = json!(dispatch.acquisition_order());
+            }
+            error
+        })
     }
     async fn open_browser(&self, open: BrowserOpen<'_>) -> Result<Value> {
         let BrowserOpen {
+            background,
             node,
             proxy,
             probe,
@@ -485,7 +563,7 @@ impl Transport for Providers {
             proxy: proxy.clone(),
         };
         sqlx::query("INSERT INTO browser_jobs(id,pod_uid,owner,body,state) VALUES($1,$2,$3,$4,'opening') ON CONFLICT DO NOTHING")
-            .bind(uuid::Uuid::parse_str(&job).map_err(|_|Error::internal())?).bind(&node.uid).bind(&self.owner).bind(json!({"node":node,"request_id":request,"proxy_id":proxy.as_ref().and_then(|p|p["id"].as_str())})).execute(&self.repo.pool).await.map_err(|_|Error::internal())?;
+            .bind(uuid::Uuid::parse_str(&job).map_err(|_|Error::internal())?).bind(&node.uid).bind(&self.owner).bind(json!({"node":node,"request_id":request,"background":background,"proxy_id":proxy.as_ref().and_then(|p|p["id"].as_str())})).execute(&self.repo.pool).await.map_err(|_|Error::internal())?;
         self.worker(&node.address, &command).await?;
         sqlx::query("UPDATE browser_jobs SET state='open' WHERE id=$1 AND owner=$2")
             .bind(uuid::Uuid::parse_str(&job).unwrap())
@@ -577,6 +655,21 @@ async fn decode_observed(
     use futures::StreamExt;
     let status = response.status().as_u16();
     let ok = response.status().is_success();
+    let retry_after = response
+        .headers()
+        .get("retry-after")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| {
+            s.parse::<i64>()
+                .ok()
+                .map(|s| s.saturating_mul(1000))
+                .or_else(|| {
+                    chrono::DateTime::parse_from_rfc2822(s)
+                        .ok()
+                        .map(|t| t.timestamp_millis() - chrono::Utc::now().timestamp_millis())
+                })
+        })
+        .map(|ms| ms.max(0));
     let mut stream = response.bytes_stream();
     let mut bytes = Vec::new();
     while let Some(chunk) = stream.next().await {
@@ -610,6 +703,9 @@ async fn decode_observed(
         );
     }
     let phases = value["details"]["phases"].clone();
+    let source_status = value["details"]["source_status"].clone();
+    let source_url = value["details"]["source_url"].clone();
+    let source_retry = value["details"]["retry_after_ms"].as_i64();
     let worker_code = value["code"].as_str();
     let result = if worker
         && !ok
@@ -632,6 +728,25 @@ async fn decode_observed(
         classify(value, status, ok)
     };
     result.map_err(|mut error| {
+        if let Some(ms) = retry_after.into_iter().chain(source_retry).max() {
+            if !error.details.is_object() {
+                error.details = Box::new(json!({}));
+            }
+            error.details["retry_after_ms"] = json!(ms.max(0));
+        }
+        if worker && error.code == "ACCESS_DENIED" {
+            if !error.details.is_object() {
+                error.details = Box::new(json!({}));
+            }
+            error.details["target_access_denied"] = json!(true);
+        }
+        if worker && source_status.is_u64() {
+            if !error.details.is_object() {
+                error.details = Box::new(json!({}));
+            }
+            error.details["source_status"] = source_status;
+            error.details["source_url"] = source_url;
+        }
         if worker && phases.is_array() {
             if !error.details.is_object() {
                 error.details = Box::new(json!({}));
@@ -641,6 +756,11 @@ async fn decode_observed(
         }
         error
     })
+}
+fn target_denied() -> Error {
+    let mut error = upstream("ACCESS_DENIED", 502);
+    error.details = Box::new(json!({"target_access_denied":true}));
+    error
 }
 fn classify(value: Value, status: u16, ok: bool) -> Result<Value> {
     let code = value["error"]["code"]
@@ -671,7 +791,7 @@ fn classify(value: Value, status: u16, ok: bool) -> Result<Value> {
         return Err(upstream("URL_NOT_ALLOWED", 400));
     }
     if code == "ACCESS_DENIED" {
-        return Err(upstream("ACCESS_DENIED", 502));
+        return Err(target_denied());
     }
     if !ok {
         return Err(match status {

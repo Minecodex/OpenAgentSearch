@@ -42,6 +42,13 @@ pub fn language_tag(raw: &str) -> Result<String> {
 }
 
 pub fn validate_command(op: &str, c: &Command, p: &Project) -> Result<()> {
+    validate_input(op, c, p, false)
+}
+/// Background retrieval keeps the region of the already planned summary query.
+pub fn validate_refresh_query(c: &Command, p: &Project) -> Result<()> {
+    validate_input("list", c, p, true)
+}
+fn validate_input(op: &str, c: &Command, p: &Project, regional_list: bool) -> Result<()> {
     if let Some(language) = &c.language {
         language_tag(language)?;
     }
@@ -78,7 +85,7 @@ pub fn validate_command(op: &str, c: &Command, p: &Project) -> Result<()> {
         if op == "list"
             && (c.source_count.is_some()
                 || c.max_chars.is_some()
-                || c.region.is_some()
+                || (c.region.is_some() && !regional_list)
                 || c.current_time.is_some())
         {
             return Err(Error::invalid("body"));

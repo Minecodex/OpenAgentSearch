@@ -2277,6 +2277,182 @@
       "required_suites": [
         "docker"
       ]
+    },
+    {
+      "id": "P02.snippet_evidence",
+      "description": "简介综合证据及零读者调用",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.capture",
+      "description": "默认关闭与完整原始榜单",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.exact",
+      "description": "原问精确免补搜",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.double",
+      "description": "双命中与引用去重",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.single",
+      "description": "单命中补搜原问",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.content",
+      "description": "正文入库及历史回放",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.summary",
+      "description": "选中正文与后台去重",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.budget",
+      "description": "故障旁路的共享时限",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.refusal",
+      "description": "拒访状态与访问配置代次",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.region",
+      "description": "地区查询的补搜身份",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.retry",
+      "description": "写入失败后的真实重试",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.gone",
+      "description": "读者池撤下与浏览器复验恢复",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.provenance",
+      "description": "缓存卡片与引擎引用的原始来源",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.explicit_denial",
+      "description": "外部接入点明确拒访",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.retry_after",
+      "description": "源站退避与任务绝对寿命",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.dates",
+      "description": "异日问题隔离",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.three_queries",
+      "description": "三变体三十候选及最终两篇",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.policy",
+      "description": "项目开关与管理乐观锁",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.console",
+      "description": "双语界面和并发编辑冲突",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.verified_sources",
+      "description": "v2 材料包复核、版本支持与分语言拒绝",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.matcher_failover",
+      "description": "匹配器超时和版本不符的精确降级与旁路",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
+    },
+    {
+      "id": "P02.verification_fence",
+      "description": "复核期间撤下的源材料不得交付",
+      "area": "P02",
+      "required_suites": [
+        "docker"
+      ]
     }
   ]
 }

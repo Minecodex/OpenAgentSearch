@@ -39,6 +39,7 @@ impl Run<'_> {
                 .field("max_chars"));
             }
             let mut response = success(self.request, data);
+            self.cache_selected(&[url.to_owned()]).await;
             if response["data"]["truncated"] == true {
                 self.warnings(&mut response, &["content_truncated"]);
             }
@@ -118,7 +119,8 @@ impl Run<'_> {
         }
         self.journal.lock().unwrap().plan_variants(&queries);
         let jobs=queries.iter().map(|(i,query)|{
-            let child=self.fork();let query_language=language.clone();let input=json!({"query":query,"language":language,"time_range":command.time_range,"count":command.count.unwrap_or(self.snapshot.project.search_limit),"variant_id":format!("Q{i}")});
+            let child=self.fork();let query_language=language.clone();let mut input=json!({"query":query,"language":language,"time_range":command.time_range,"count":command.count.unwrap_or(self.snapshot.project.search_limit),"variant_id":format!("Q{i}")});
+            if let Some(region)=&command.region {input["region"]=json!(region);}
             async move{
                 let variant=format!("Q{i}");
                 let result=child.pool("search","search",input,command).await;
@@ -129,6 +131,10 @@ impl Run<'_> {
                     let cards=oas_domain::search_cards::parse(&output.value)?;
                     if op=="summary" {
                         let mut material=crate::search_cards::candidates(&cards,query_language.as_deref().is_none_or(|value|value.starts_with("zh")));
+                        if let Some(origin) = output.value.get("_cards_cache") {
+                            let origin: oas_domain::cache::CachedOrigin = serde_json::from_value(origin.clone()).map_err(|_| protocol("SEARCH_FAILED"))?;
+                            for hit in &mut material { hit.cache = Some(origin.clone()); }
+                        }
                         material.extend(parsed);parsed=material;
                     }
                     if op=="summary" && let Some(refs)=output.value["engine_answer"]["sources"].as_array() {
@@ -136,16 +142,19 @@ impl Run<'_> {
                             let Some(url)=source["url"].as_str().filter(|s|canonical_url(s).is_some()) else{continue};
                             if !parsed.iter().any(|h|h.url==url) {
                                 let title=source["title"].as_str().unwrap_or("");
-                                parsed.push(Hit{url:url.into(),title:title.into(),snippet:title.into(),content:None,rank:0,variant_id:String::new(),call_id:String::new()});
+                                parsed.push(Hit{url:url.into(),title:title.into(),snippet:title.into(),summary:None,cached_summary_key:None,cache:output.value.get("_answer_cache").and_then(|v|serde_json::from_value(v.clone()).ok()),published_at:None,coverage:oas_domain::cache::Coverage::Unknown,content:None,rank:0,variant_id:String::new(),call_id:String::new()});
                             }
                         }
                     }
                     for(rank,mut hit)in parsed.into_iter().enumerate(){
-                        if canonical_url(&hit.url).is_none(){partial=true;continue;}
-                        hit.variant_id=variant.clone();hit.call_id=output.call_id.clone();hit.rank=rank+1;
-                        raw.push(json!({"url":hit.url,"title":hit.title,"snippet":hit.snippet,"rank":hit.rank,"call_id":output.call_id}));normalized.push(hit);
+                        if child.page_identity(&hit.url).is_none(){partial=true;continue;}
+                        hit.variant_id=variant.clone();hit.call_id=hit.cache.as_ref().map(|c|c.call_id.clone()).unwrap_or_else(||output.call_id.clone());if hit.rank == 0 || output.value["_cache"]!=true {hit.rank=rank+1;}
+                        let mut item=json!({"url":hit.url,"title":hit.title,"snippet":hit.snippet,"rank":hit.rank,"call_id":hit.call_id});
+                        if let Some(origin)=&hit.cache{item["cache"]=json!(origin);}
+                        raw.push(item);normalized.push(hit);
                     }
-                    child.journal.lock().unwrap().variant_result(&variant,if partial{"partial"}else{"success"},Some(json!(raw)),Some(&output.call_id));
+                    child.journal.lock().unwrap().variant_result(&variant,if partial{"partial"}else{"success"},Some(json!(raw)),if output.value["_cache"]==true {None}else{Some(&output.call_id)});
+                    if output.value["_cache"]==true && let Some(v)=child.journal.lock().unwrap().evidence["variants"].as_array_mut().and_then(|v|v.iter_mut().find(|v|v["variant_id"]==variant)){v["cache_lookup_id"]=json!(output.call_id);}
                     Ok((normalized,partial,output.value.get("engine_answer").cloned(),cards))
                 });
                 if let Err(error)=&result{child.journal.lock().unwrap().variant_result(&variant,if error.code=="CANCELLED"{"cancelled"}else{"error"},None,None);}
@@ -188,7 +197,7 @@ impl Run<'_> {
         let mut indexes = HashMap::new();
         let mut unique = Vec::new();
         for hit in &hits {
-            let key = canonical_url(&hit.url).unwrap();
+            let key = self.page_identity(&hit.url).unwrap();
             if let std::collections::hash_map::Entry::Vacant(entry) = indexes.entry(key) {
                 entry.insert(unique.len());
                 unique.push(hit.clone());
@@ -201,12 +210,34 @@ impl Run<'_> {
             json!({"unique_candidates":unique.len()}),
             started,
         );
+        if self.cache_enabled() && self.engine.cache.is_some() {
+            let cached = self.journal.lock().unwrap().evidence["cache_lookups"]
+                .as_array()
+                .is_some_and(|values| {
+                    !values.is_empty() && values.iter().all(|v| v["hit"] == true)
+                });
+            if !cached || op != "list" {
+                unique = self.cache_rank(question, hits.clone()).await;
+            }
+        }
         if op == "list" {
+            let limit = command.count.unwrap_or(self.snapshot.project.search_limit);
+            let mut visible = unique.iter().take(limit).cloned().collect::<Vec<_>>();
+            self.cache_summaries(&mut visible).await;
             let items = unique
                 .iter()
-                .take(command.count.unwrap_or(self.snapshot.project.search_limit))
-                .map(|hit| json!({"url":hit.url,"title":hit.title,"snippet":hit.snippet}))
+                .take(limit)
+                .zip(&visible)
+                .map(|(hit, shown)| {
+                    let mut item = json!({"url":hit.url,"title":hit.title,"snippet":hit.snippet});
+                    if let Some(summary) = &shown.summary {
+                        item["summary"] = json!(summary);
+                    }
+                    item
+                })
                 .collect::<Vec<_>>();
+            self.cache_selected(&visible.iter().map(|h| h.url.clone()).collect::<Vec<_>>())
+                .await;
             let mut response = success(self.request, json!({"items":items}));
             if let Some(card) = engine_answer {
                 response["data"]["engine_answer"] = card;
@@ -233,7 +264,7 @@ impl Run<'_> {
             return Ok(self.empty());
         }
         let mut candidates=unique.iter().enumerate().map(|(i,hit)|{
-            let matches=hits.iter().filter(|h|canonical_url(&h.url)==canonical_url(&hit.url)).map(|h|json!({"variant_id":h.variant_id,"call_id":h.call_id,"url":h.url,"rank":h.rank})).collect::<Vec<_>>();
+            let matches=hits.iter().filter(|h|self.page_identity(&h.url)==self.page_identity(&hit.url)).map(|h|{let mut m=json!({"variant_id":h.variant_id,"call_id":h.call_id,"url":h.url,"rank":h.rank});if let Some(origin)=&h.cache{m["cache"]=json!(origin);}m}).collect::<Vec<_>>();
             json!({"candidate_id":format!("c{}",i+1),"url":hit.url,"title":hit.title,"snippet_preview":hit.snippet,"hits":matches,"relevant":null,"score":null,"score_batch_id":null,"score_call_id":null,"selected":false,"selection_reason":null,"source_id":null,"material":null,"reader_call_ids":[]})
         }).collect::<Vec<_>>();
         self.evidence("candidates", json!(candidates));
@@ -273,6 +304,15 @@ impl Run<'_> {
                 return Err(protocol("MODEL_FAILED"));
             }
             return Ok(self.empty());
+        }
+        if self.snapshot.project.summary_snippets_only {
+            self.cache_selected(
+                &selected
+                    .iter()
+                    .map(|i| unique[*i].url.clone())
+                    .collect::<Vec<_>>(),
+            )
+            .await;
         }
         let remaining = self
             .total_deadline

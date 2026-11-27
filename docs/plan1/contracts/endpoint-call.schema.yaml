@@ -38,7 +38,7 @@ properties:
   operation: {type: string, minLength: 1}
   origin:
     type: string
-    enum: [business, debug, endpoint_test, proxy_test]
+    enum: [business, debug, endpoint_test, proxy_test, cache_background]
   queue_ms: {type: integer, minimum: 0}
   execution_ms: {type: integer, minimum: 0}
   sent: {type: boolean}

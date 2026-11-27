@@ -155,6 +155,24 @@ pub struct Dispatch {
     tokenizer: Option<String>,
 }
 impl Dispatch {
+    pub fn acquisition_order(&self) -> Option<i64> {
+        self.journal
+            .lock()
+            .unwrap()
+            .call(&self.call_id)
+            .and_then(|c| c["started_at"].as_str())
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .and_then(|t| t.timestamp_nanos_opt())
+    }
+    pub fn collected_at(&self) -> Option<i64> {
+        self.journal
+            .lock()
+            .unwrap()
+            .call(&self.call_id)
+            .and_then(|c| c["started_at"].as_str())
+            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+            .map(|t| t.timestamp_millis())
+    }
     pub fn new(
         journal: SharedJournal,
         lease: Lease,
@@ -193,7 +211,18 @@ impl Dispatch {
         c["call_id"] = json!(self.call_id);
         c["span_id"] = json!(self.span_id);
         c["sent"] = json!(true);
-        c["started_at"] = json!(Utc::now());
+        static LAST: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
+        let wall = Utc::now().timestamp_nanos_opt().unwrap_or_default();
+        let ordinal = LAST
+            .fetch_update(
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::SeqCst,
+                |old| Some(wall.max(old + 1)),
+            )
+            .unwrap();
+        c["started_at"] = json!(chrono::DateTime::from_timestamp_nanos(
+            wall.max(ordinal + 1)
+        ));
         c["finished_at"] = c["started_at"].clone();
         c["_pending"] = json!(true);
         let mut j = self.journal.lock().unwrap();

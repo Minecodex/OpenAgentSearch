@@ -1,5 +1,5 @@
 import {test,before,after} from 'node:test';
-import {assert} from './proof.mjs';
+import {assert,prove} from './proof.mjs';
 import {createRequire} from 'node:module';
 import {existsSync,mkdirSync} from 'node:fs';
 import {base,upstream,server,cookie,setup,close,admin,endpoint,project,business,recorded,editable} from './context.mjs';
@@ -31,7 +31,7 @@ function assertListSummary(result,exported){
  assert.ok(material.article_preview.includes('A rain gauge measures rainfall.'));
 }
 
-test('search-list synthesis needs no reader pool and preserves scoring, citations and original material',async()=>{
+test('search-list synthesis needs no reader pool and preserves scoring, citations and original material',()=>prove('P02.snippet_evidence',async()=>{
  const made=await project({summary_snippets_only:true,reader_pools:[],allow_snippets:false});
  assert.equal(made.project.summary_snippets_only,true);
  assert.equal((await admin('projects/'+made.project.id)).summary_snippets_only,true);
@@ -39,7 +39,7 @@ test('search-list synthesis needs no reader pool and preserves scoring, citation
  const result=await business(made,'summary',{query:'rainfall',source_count:1});
  assertListSummary(result,await trace(result));
  assert.ok(!server.requests.slice(start).some(r=>r.path.includes('extract')||r.path==='/article'));
-});
+}));
 
 test('integrated search turns off inline full bodies when the project selects search-list synthesis',async()=>{
  for(const provider of ['tavily','deepseek']){
@@ -99,7 +99,7 @@ test('project create and edit expose a persistent HeroUI switch in both language
    const label=en?'Summarize search results only':'直接使用搜索列表总结';
    const toggle=dialog.getByRole('switch',{name:label,exact:true});
    assert.equal(await toggle.isChecked(),false);
-   await dialog.locator('[data-slot="switch-control"]').click();
+   await dialog.getByText(label,{exact:true}).click();
    assert.equal(await toggle.isChecked(),true);
    await toggle.focus();await page.keyboard.press('Space');
    assert.equal(await toggle.isChecked(),false);

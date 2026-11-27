@@ -584,7 +584,25 @@
   padding: 12px 0;
 }
 .hit > div {
+  flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hit > .rank {
+  flex: 0 0 auto;
+  min-width: 2ch;
+  white-space: nowrap;
+}
+.hit .source-address {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hit h3 .row-link {
+  font: inherit;
+  text-align: start;
+  white-space: normal;
 }
 .rank {
   font: 11px var(--mono);

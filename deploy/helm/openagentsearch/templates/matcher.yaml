@@ -1,0 +1,46 @@
+{{- $c := .Values.cache -}}
+{{- $m := $c.matcher -}}
+{{- if and $c.enabled $m.enabled -}}
+{{- if ne $c.handler "v2" -}}{{ fail "cache.matcher.enabled requires cache.handler=v2" }}{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-cache-matcher
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+spec:
+  selector: {app: {{ .Release.Name }}-cache-matcher}
+  ports: [{name: http, port: 8092, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-cache-matcher
+  labels: {app.kubernetes.io/instance: {{ .Release.Name }}}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: {{ .Release.Name }}-cache-matcher}}
+  template:
+    metadata:
+      labels: {app: {{ .Release.Name }}-cache-matcher, app.kubernetes.io/instance: {{ .Release.Name }}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, runAsGroup: 65534}
+      containers:
+        - name: matcher
+          image: {{ $m.image | quote }}
+          args: ["--model","/data/model","--profile",{{ printf "/data/profiles/%s.json" $m.profile | quote }}]
+          ports: [{name: http, containerPort: 8092}]
+          readinessProbe: {httpGet: {path: /health/ready, port: http}, periodSeconds: 5}
+          resources: {{ toYaml $m.resources | nindent 12 }}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          {{- if $m.existingSecret }}
+          env:
+            - name: OAS_CACHE_MATCHER_API_KEY
+              valueFrom: {secretKeyRef: {name: {{ $m.existingSecret }}, key: {{ $m.secretKey }}}}
+          {{- end }}
+          volumeMounts: [{name: data, mountPath: /data, readOnly: true}]
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: {{ $m.existingClaim | quote }}, readOnly: true}
+{{- end }}

@@ -274,6 +274,7 @@ export function Records() {
               ["debug", t("调试", "Debug")],
               ["endpoint_test", t("接入点测试", "Endpoint test")],
               ["proxy_test", t("代理测试", "Proxy test")],
+        ["cache_background", t("缓存后台", "Cache background")],
             ].map(([value, label]) => ({ value, label }))}
           />
           <LanguagePicker
@@ -599,6 +600,12 @@ export function Trace() {
       enabled:tab==="execution",
     })),
   });
+  const olderLookups = activeKey === "cache_lookup" && tab === "execution" && evidence.data?.cache_lookups?.some((row: Entity) => !row.span_id)
+    ? spans.filter(s => s.stage === "cache_lookup" && !evidence.data?.cache_lookups?.some((row: Entity) => row.span_id === s.span_id)) : [];
+  const lookupDetails = useQueries({ queries: olderLookups.map(item => ({
+    queryKey: ["span", id, item.span_id],
+    queryFn: () => api<Entity>("/admin/v1/requests/" + id + "/spans/" + item.span_id),
+  })) });
   const pages = materialPages(spans, calls.data?.items || [], evidence.data?.candidates || [], sourceDetails.flatMap(q => q.data ? [q.data] : []));
   const candidate = evidence.data?.candidates?.find((c: Entity) =>
     params.get("candidate")
@@ -665,7 +672,11 @@ export function Trace() {
   const timing = stageTiming(offset, duration, total);
   const executionItems = currentGroup.map(item=>{
     const call=calls.data?.items.find((c:Entity)=>c.span_id===item.span_id);
-    let title=stageLabel(item.stage);
+    const lookup = item.stage === "cache_lookup"
+      ? evidence.data?.cache_lookups?.find((row: Entity) => row.span_id === item.span_id) : undefined;
+    const historical = item.stage === "cache_lookup"
+      ? lookupDetails.find(q => q.data?.span?.span_id === item.span_id)?.data?.input?.query : undefined;
+    let title = lookup?.query || historical || stageLabel(item.stage);
     if(call?.endpoint_name) {
       title=call.endpoint_name;
       if(call.browser_job?.search_engine) title+=" · "+(call.browser_job.search_engine==="baidu"?t("百度","Baidu"):"Google");
@@ -822,6 +833,7 @@ export function Trace() {
                         record={data}
                         span={span.data}
                         evidence={evidence.data || {}}
+                        evidenceLoading={evidence.isLoading}
                         openCandidate={(candidate) => update({ candidate })}
                       />
                       <ArchivedMaterials requestId={id} materials={(span.data.replay || []).map((m:Entity)=>({

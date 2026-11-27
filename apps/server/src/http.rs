@@ -539,9 +539,10 @@ pub async fn execute(
                 | "QUERY_UNSUPPORTED"
                 | "TIME_RANGE_UNSUPPORTED" => 400,
                 "DEADLINE_EXCEEDED" | "STAGE_BUDGET_EXCEEDED" => 504,
-                "SERVICE_UNAVAILABLE" | "PROXY_UNAVAILABLE" | "ENDPOINT_CONFIGURATION_CHANGED" => {
-                    503
-                }
+                "SERVICE_UNAVAILABLE"
+                | "PROXY_UNAVAILABLE"
+                | "ENDPOINT_CONFIGURATION_CHANGED"
+                | "ORIGIN_RETRY_LATER" => 503,
                 "CAPACITY_EXHAUSTED" | "RATE_LIMITED" => 429,
                 _ => 502,
             };

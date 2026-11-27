@@ -36,9 +36,11 @@ function localTime(value: string) {
 export function TimeWindow({
   range,
   change,
+  presetHours,
 }: {
   range: TimeRange;
-  change: (range: TimeRange) => void;
+  change: (range: TimeRange, presetHours?: number) => void;
+  presetHours?: number | null;
 }) {
   const { t } = useApp();
   const [draft, setDraft] = useState<TimeRange | null>(null);
@@ -58,13 +60,13 @@ export function TimeWindow({
         {[1, 24, 168].map((hours) => (
           <button
             key={hours}
-            aria-pressed={Math.abs(duration - hours * 3600000) < 1000}
+            aria-pressed={presetHours === undefined ? Math.abs(duration - hours * 3600000) < 1000 : presetHours === hours}
             onClick={() => {
               const now = Date.now();
               change({
                 from: new Date(now - hours * 3600000).toISOString(),
                 to: new Date(now).toISOString(),
-              });
+              }, hours);
             }}
           >
             {hours === 168 ? "7d" : `${hours}h`}

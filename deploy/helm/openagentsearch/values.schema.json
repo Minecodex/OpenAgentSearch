@@ -1,31 +1,325 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["images", "publicOrigin", "browser", "history", "service", "credentials", "postgres", "searxng", "crawl4ai"],
+  "required": [
+    "images",
+    "publicOrigin",
+    "browser",
+    "history",
+    "service",
+    "credentials",
+    "postgres",
+    "searxng",
+    "crawl4ai"
+  ],
   "properties": {
-    "publicOrigin": {"type":"string","pattern":"^https?://[^/]+$"},
-    "history": {"type":"object","required":["retentionDays"],"properties":{"retentionDays":{"type":"integer","minimum":1,"maximum":36500}}},
-    "browser": {"type":"object","required":["replicas","slots"],"properties":{"replicas":{"type":"integer","minimum":0,"maximum":100},"slots":{"type":"integer","minimum":1,"maximum":64}}},
-    "credentials": {"type":"object","properties":{
-      "existingSecret":{"type":"string"}, "adminUsername":{"type":"string","minLength":1},
-      "adminPassword":{"type":"string","pattern":"^$|^.{8,}$"},
-      "masterKey":{"type":"string","pattern":"^$|^[a-fA-F0-9]{64}$"},
-      "workerKey":{"type":"string","pattern":"^$|^.{24,}$"}
-    }},
-    "service":{"type":"object","required":["type","port"],"properties":{"type":{"enum":["ClusterIP","NodePort","LoadBalancer"]},"port":{"type":"integer","minimum":1,"maximum":65535}}},
-    "images":{"type":"object","required":["api","web","browser"],"additionalProperties":{"type":"object","required":["repository","tag","pullPolicy"],"properties":{"repository":{"type":"string","minLength":1},"tag":{"type":"string","minLength":1},"pullPolicy":{"enum":["Always","IfNotPresent","Never"]}}}},
-    "searxng":{"type":"object","required":["enabled","image"],"properties":{"enabled":{"type":"boolean"},"image":{"type":"string","minLength":1}}},
-    "crawl4ai":{"type":"object","required":["enabled","image"],"properties":{
-      "enabled":{"type":"boolean"},"image":{"type":"string","minLength":1},
-      "publicDns":{"type":"object","additionalProperties":false,"properties":{
-        "enabled":{"type":"boolean"},"image":{"type":"string","minLength":1},
-        "upstream":{"type":"string","format":"ipv4"},
-        "tlsServerName":{"type":"string","format":"hostname"},
-        "clusterDomain":{"type":"string","format":"hostname"},
-        "clusterServer":{"anyOf":[{"const":""},{"type":"string","format":"ipv4"}]}
-      },"if":{"properties":{"enabled":{"const":true}},"required":["enabled"]},
-      "then":{"required":["image","upstream","tlsServerName","clusterDomain","clusterServer"],"properties":{"clusterServer":{"minLength":1}}}}
-    }},
-    "postgres":{"type":"object","required":["image","storage"],"properties":{"image":{"type":"string","minLength":1},"storage":{"type":"string","pattern":"^[1-9][0-9]*(Mi|Gi|Ti)$"},"password":{"type":"string"}}}
+    "publicOrigin": {
+      "type": "string",
+      "pattern": "^https?://[^/]+$"
+    },
+    "history": {
+      "type": "object",
+      "required": [
+        "retentionDays"
+      ],
+      "properties": {
+        "retentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 36500
+        }
+      }
+    },
+    "browser": {
+      "type": "object",
+      "required": [
+        "replicas",
+        "slots"
+      ],
+      "properties": {
+        "replicas": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "slots": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "properties": {
+        "existingSecret": {
+          "type": "string"
+        },
+        "adminUsername": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adminPassword": {
+          "type": "string",
+          "pattern": "^$|^.{8,}$"
+        },
+        "masterKey": {
+          "type": "string",
+          "pattern": "^$|^[a-fA-F0-9]{64}$"
+        },
+        "workerKey": {
+          "type": "string",
+          "pattern": "^$|^.{24,}$"
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": [
+        "type",
+        "port"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "ClusterIP",
+            "NodePort",
+            "LoadBalancer"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "images": {
+      "type": "object",
+      "required": [
+        "api",
+        "web",
+        "browser"
+      ],
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "repository",
+          "tag",
+          "pullPolicy"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pullPolicy": {
+            "enum": [
+              "Always",
+              "IfNotPresent",
+              "Never"
+            ]
+          }
+        }
+      }
+    },
+    "searxng": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "image"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "crawl4ai": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "image"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publicDns": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "image": {
+              "type": "string",
+              "minLength": 1
+            },
+            "upstream": {
+              "type": "string",
+              "format": "ipv4"
+            },
+            "tlsServerName": {
+              "type": "string",
+              "format": "hostname"
+            },
+            "clusterDomain": {
+              "type": "string",
+              "format": "hostname"
+            },
+            "clusterServer": {
+              "anyOf": [
+                {
+                  "const": ""
+                },
+                {
+                  "type": "string",
+                  "format": "ipv4"
+                }
+              ]
+            }
+          },
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "image",
+              "upstream",
+              "tlsServerName",
+              "clusterDomain",
+              "clusterServer"
+            ],
+            "properties": {
+              "clusterServer": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "postgres": {
+      "type": "object",
+      "required": [
+        "image",
+        "storage"
+      ],
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storage": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*(Mi|Gi|Ti)$"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "handler": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$"
+        },
+        "matcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type":"boolean"},
+            "image": {"type":"string"},
+            "existingClaim": {"type":"string"},
+            "resources": {"type":"object"},
+            "url": {"type":"string","pattern":"^$|^https?://"},
+            "profile": {"type":"string","pattern":"^$|^[a-f0-9]{64}$"},
+            "existingSecret": {"type":"string"},
+            "secretKey": {"type":"string","minLength":1}
+          },
+          "allOf": [{
+            "if":{"required":["enabled"],"properties":{"enabled":{"const":true}}},
+            "then":{"required":["image","existingClaim","profile"],"properties":{
+              "image":{"minLength":1},"existingClaim":{"minLength":1},
+              "profile":{"minLength":64},"url":{"maxLength":0}
+            }}
+          }]
+        },
+        "lookupTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "listTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "contentTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "queueCapacity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "taskTtlSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "taskMaxAttempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "summaryMaxInputTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxSnapshots": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "qdrant": {
+          "type": "object",
+          "properties": {
+            "replicas": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "shards": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "replicationFactor": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    }
   }
 }

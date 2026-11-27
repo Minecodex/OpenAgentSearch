@@ -13,6 +13,7 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct Repository {
     pub pool: PgPool,
+    pub(crate) cache_accounting: PgPool,
     pub secrets: Secrets,
 }
 pub(crate) fn db(e: sqlx::Error) -> Error {
@@ -37,6 +38,11 @@ fn conflict() -> Error {
 }
 impl Repository {
     pub async fn connect(options: sqlx::postgres::PgConnectOptions, key: &str) -> Result<Self> {
+        // Best-effort hotness writes may wait on the registry. They cannot
+        // occupy the connections used to authorize requests or serve snapshots.
+        let cache_accounting = PgPoolOptions::new()
+            .max_connections(3)
+            .connect_lazy_with(options.clone());
         let pool = PgPoolOptions::new()
             .max_connections(20)
             .connect_with(options)
@@ -44,8 +50,12 @@ impl Repository {
             .map_err(db)?;
         Ok(Self {
             pool,
+            cache_accounting,
             secrets: Secrets::new(key)?,
         })
+    }
+    pub async fn close(&self) {
+        tokio::join!(self.pool.close(), self.cache_accounting.close());
     }
     pub async fn migrate(&self) -> Result<()> {
         sqlx::migrate!("./migrations")
@@ -404,6 +414,8 @@ impl Repository {
                         "search_original_query",
                         "summary_snippets_only",
                         "allow_snippets",
+                        "cache_enabled",
+                        "cache_policy",
                         "expected_version",
                     ],
                 )?;
@@ -413,6 +425,22 @@ impl Repository {
                 validate_project(&p)?;
                 p.id = key.clone();
                 p.version = version;
+                let previous = old.as_ref().map(|r| r.get::<Value, _>("body"));
+                p.cache_access_epoch = crate::cache::access::project_epoch(previous.as_ref(), &p);
+                p.cache_epoch = previous
+                    .as_ref()
+                    .and_then(|v| v["cache_epoch"].as_i64())
+                    .unwrap_or(0)
+                    + i64::from(previous.as_ref().is_some_and(|v| {
+                        v["cache_enabled"].as_bool().unwrap_or(false) != p.cache_enabled
+                    }));
+                if let Some(policy) = &mut p.cache_policy {
+                    policy.validate()?;
+                }
+                if !p.cache_enabled {
+                    sqlx::query("UPDATE cache_jobs SET state='ignored',last_error='cache_disabled',finished_at=$2 WHERE scope=$1 AND state IN ('waiting','retry')")
+                        .bind(&p.id).bind(Utc::now().timestamp_millis()).execute(&mut *tx).await.map_err(db)?;
+                }
                 input = serde_json::to_value(&p).unwrap();
                 for (role, pools) in [("search", &p.search_pools), ("reader", &p.reader_pools)] {
                     for id in pools.iter().flatten() {
@@ -534,7 +562,20 @@ impl Repository {
             input["managed_by"] = json!("administrator");
             input["availability"] = json!("available");
         }
+        let secret_changed = old
+            .as_ref()
+            .and_then(|r| r.get::<Option<Vec<u8>>, _>("secret"))
+            != secret;
         sqlx::query("INSERT INTO resources(id,kind,version,body,secret) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET version=$3,body=$4,secret=$5,updated_at=now()").bind(uuid).bind(kind).bind(version).bind(&input).bind(secret).execute(&mut *tx).await.map_err(db)?;
+        crate::cache::access::changed(
+            &mut tx,
+            kind,
+            &key,
+            &input,
+            old.as_ref().map(|r| r.get::<Value, _>("body")).as_ref(),
+            secret_changed,
+        )
+        .await?;
         sqlx::query("DELETE FROM resource_links WHERE owner_id=$1")
             .bind(uuid)
             .execute(&mut *tx)
@@ -667,13 +708,12 @@ impl Repository {
             &mut start.input,
             &oas_domain::privacy::secrets(&snapshot.secrets),
         );
-        start.snapshot = json!({"project":snapshot.project,"routes_version":snapshot.routes["version"],
-            "endpoints":snapshot.endpoints.iter().map(|e|json!({"id":e.id,"name":e.name,"version":e.version,"kind":e.kind,"provider":e.provider,"adapter":e.adapter,"timeout_ms":e.timeout_ms,"max_concurrency":e.max_concurrency,"rpm":e.rpm})).collect::<Vec<_>>()});
+        start.snapshot = snapshot.recording();
         insert_start(&mut tx, &start).await?;
         tx.commit().await.map_err(db)?;
         Ok((snapshot, start))
     }
-    async fn load_snapshot(
+    pub async fn load_snapshot(
         &self,
         connection: &mut sqlx::PgConnection,
         project: Uuid,

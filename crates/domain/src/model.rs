@@ -25,35 +25,39 @@ pub fn request(endpoint: &Endpoint, task: &str, input: &Value) -> Result<(Value,
             + tokens::count(encoding, message["content"].as_str().unwrap())?;
     }
     let mut payload = json!({"model":endpoint.options["model"],"messages":messages,
-        "max_tokens":endpoint.options["max_output_tokens"].as_u64().unwrap_or(2048),
+        "max_tokens":output_limit(endpoint, task),
         "response_format":{"type":"json_object"},"temperature":0,"stream":false});
     if let Some(effort) = endpoint.options.get("reasoning_effort") {
         payload["reasoning_effort"] = effort.clone();
     }
     Ok((payload, count))
 }
-fn input_limit(endpoint: &Endpoint) -> u64 {
+fn output_limit(endpoint: &Endpoint, task: &str) -> u64 {
+    let configured = endpoint.options["max_output_tokens"]
+        .as_u64()
+        .unwrap_or(2048);
+    if task == "cache_summary" {
+        configured.min(1000)
+    } else {
+        configured
+    }
+}
+fn input_limit(endpoint: &Endpoint, task: &str) -> u64 {
     let input = endpoint.options["max_input_tokens"]
         .as_u64()
         .unwrap_or(8192);
     endpoint.options["context_window_tokens"]
         .as_u64()
         .map_or(input, |window| {
-            input.min(
-                window.saturating_sub(
-                    endpoint.options["max_output_tokens"]
-                        .as_u64()
-                        .unwrap_or(2048),
-                ),
-            )
+            input.min(window.saturating_sub(output_limit(endpoint, task)))
         })
 }
 pub fn fits(endpoint: &Endpoint, task: &str, input: &Value) -> Result<bool> {
-    Ok(request(endpoint, task, input)?.1 as u64 <= input_limit(endpoint))
+    Ok(request(endpoint, task, input)?.1 as u64 <= input_limit(endpoint, task))
 }
 pub fn checked(endpoint: &Endpoint, task: &str, input: &Value) -> Result<(Value, usize)> {
     let result = request(endpoint, task, input)?;
-    if result.1 as u64 > input_limit(endpoint) {
+    if result.1 as u64 > input_limit(endpoint, task) {
         return Err(Error::new(
             "MODEL_CONTEXT_EXCEEDED",
             502,
@@ -176,6 +180,18 @@ mod tests {
             request(&e, "rewrite", &input).unwrap().0["reasoning_effort"],
             "low"
         );
+    }
+    #[test]
+    fn cache_summary_reserves_its_own_output_limit() {
+        let mut e = endpoint();
+        e.options["max_output_tokens"] = json!(4096);
+        e.options["context_window_tokens"] = json!(8192);
+        let input = json!({"title":"Rain","text":" wind".repeat(4800)});
+        let (wire, tokens) = checked(&e, "cache_summary", &input).unwrap();
+        assert_eq!(wire["max_tokens"], 1000);
+        assert!(tokens > 4096 && tokens + 1000 <= 8192);
+        e.options["context_window_tokens"] = json!(tokens + 999);
+        assert!(!fits(&e, "cache_summary", &input).unwrap());
     }
     #[test]
     fn shared_window_reserves_the_full_output_allowance() {

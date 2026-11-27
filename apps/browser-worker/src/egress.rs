@@ -170,9 +170,12 @@ async fn upstream(proxy: Option<&Value>, host: &str, port: u16) -> Result<Stream
     for cert in rustls_native_certs::load_native_certs().certs {
         let _ = roots.add(cert);
     }
-    let config = ClientConfig::builder()
-        .with_root_certificates(roots)
-        .with_no_client_auth();
+    let config = ClientConfig::builder_with_provider(Arc::new(
+        tokio_rustls::rustls::crypto::ring::default_provider(),
+    ))
+    .with_safe_default_protocol_versions()?
+    .with_root_certificates(roots)
+    .with_no_client_auth();
     let connector = TlsConnector::from(Arc::new(config));
     let socket = TcpStream::connect((ph, pp))
         .await

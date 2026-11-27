@@ -11,7 +11,9 @@ use std::{
 };
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use tokio_util::sync::CancellationToken;
+mod cache_limits;
 mod fair;
+pub use cache_limits::BrowserWaiting;
 mod probes;
 mod proxy;
 pub use probes::{ProbePlanner, ProbeTicket};
@@ -30,6 +32,10 @@ pub struct Selection<'a> {
 }
 #[derive(Default)]
 struct State {
+    cache_limit: usize,
+    cache_model_limit: usize,
+    cache_model_rpm: usize,
+    foreground_browser_waiters: usize,
     proxy_health: HashMap<String, proxy::Health>,
     model_queues: HashMap<String, fair::Queue>,
     active: HashMap<String, usize>,
@@ -43,6 +49,7 @@ struct State {
     risk: HashMap<String, i64>,
     workers: Vec<WorkerNode>,
     requests: HashMap<String, (Option<String>, CancellationToken)>,
+    background_requests: HashSet<String>,
 }
 #[derive(Clone)]
 pub struct Scheduler {
@@ -122,8 +129,21 @@ impl Scheduler {
         owner: String,
         proxy: Option<&str>,
     ) {
+        self.recover_job_class(node, job_id, owner, proxy, false);
+    }
+    pub fn recover_job_class(
+        &self,
+        node: WorkerNode,
+        job_id: String,
+        owner: String,
+        proxy: Option<&str>,
+        background: bool,
+    ) {
         let mut s = self.state.lock().unwrap();
         let mut keys = vec![format!("worker:{}", node.uid)];
+        if background {
+            keys.push("cache:browser".into());
+        }
         if let Some(proxy) = proxy {
             keys.push(format!("proxy:{proxy}"));
         }
@@ -136,6 +156,7 @@ impl Scheduler {
             state: self.state.clone(),
             keys,
             rate: None,
+            background_rate: None,
             rotation: None,
             recovery_node: Some(node.uid.clone()),
         };
@@ -179,6 +200,7 @@ impl Scheduler {
         true
     }
     pub fn unregister(&self, id: &str) {
+        self.state.lock().unwrap().background_requests.remove(id);
         self.state.lock().unwrap().requests.remove(id);
     }
     pub fn active_requests(&self) -> usize {
@@ -332,6 +354,7 @@ impl Scheduler {
                         state: self.state.clone(),
                         keys: vec![id.clone()],
                         rate: Some(id.clone()),
+                        background_rate: None,
                         rotation: Some((key.clone(), token)),
                         recovery_node: None,
                     },
@@ -355,6 +378,7 @@ impl Scheduler {
             state: self.state.clone(),
             keys: vec![e.id.clone()],
             rate: Some(e.id.clone()),
+            background_rate: None,
             rotation: None,
             recovery_node: None,
         })
@@ -426,6 +450,15 @@ impl Scheduler {
         search: bool,
         excluded: &HashSet<String>,
     ) -> Result<(WorkerNode, Option<Value>, Option<Value>, Lease)> {
+        self.browser_excluding_class(snapshot, search, excluded, false)
+    }
+    pub fn browser_excluding_class(
+        &self,
+        snapshot: &Snapshot,
+        search: bool,
+        excluded: &HashSet<String>,
+        background: bool,
+    ) -> Result<(WorkerNode, Option<Value>, Option<Value>, Lease)> {
         let mut s = self.state.lock().unwrap();
         let mut nodes = s
             .workers
@@ -435,6 +468,15 @@ impl Scheduler {
             .collect::<Vec<_>>();
         if nodes.is_empty() {
             return Err(Error::unavailable());
+        }
+        if background {
+            let total = nodes.iter().map(|n| n.slots).sum::<usize>();
+            let effective = s.cache_limit.max(1).min(total.saturating_sub(1));
+            if s.foreground_browser_waiters > 0
+                || s.active.get("cache:browser").copied().unwrap_or(0) >= effective
+            {
+                return Err(capacity());
+            }
         }
         if let Some(last) = s.cursors.get("workers")
             && let Some(i) = nodes.iter().position(|n| &n.uid == last)
@@ -459,6 +501,9 @@ impl Scheduler {
             })
             .ok_or_else(capacity)?;
         let mut keys = vec![format!("worker:{}", node.uid)];
+        if background {
+            keys.push("cache:browser".into());
+        }
         let (proxy, probe) = if let Some(pool) = &snapshot.project.browser_proxy_pool_id {
             let members = snapshot
                 .pools
@@ -572,6 +617,7 @@ impl Scheduler {
                 state: self.state.clone(),
                 keys,
                 rate: None,
+                background_rate: None,
                 rotation: None,
                 recovery_node: None,
             },
@@ -620,6 +666,7 @@ pub struct Lease {
     state: Arc<Mutex<State>>,
     keys: Vec<String>,
     rate: Option<String>,
+    background_rate: Option<String>,
     rotation: Option<(String, u64)>,
     recovery_node: Option<String>,
 }
@@ -628,6 +675,12 @@ impl Lease {
     pub fn commit(&mut self) {
         let mut s = self.state.lock().unwrap();
         if let Some(id) = self.rate.take() {
+            if let Some(n) = s.reserved.get_mut(&id) {
+                *n = n.saturating_sub(1);
+            }
+            s.sent.entry(id).or_default().push_back(self.clock.millis());
+        }
+        if let Some(id) = self.background_rate.take() {
             if let Some(n) = s.reserved.get_mut(&id) {
                 *n = n.saturating_sub(1);
             }
@@ -651,6 +704,11 @@ fn compact_rotation(entries: &mut VecDeque<(u64, String, bool)>) {
 impl Drop for Lease {
     fn drop(&mut self) {
         let mut s = self.state.lock().unwrap();
+        if let Some(id) = self.background_rate.take()
+            && let Some(n) = s.reserved.get_mut(&id)
+        {
+            *n = n.saturating_sub(1);
+        }
         if let Some(id) = self.rate.take()
             && let Some(n) = s.reserved.get_mut(&id)
         {

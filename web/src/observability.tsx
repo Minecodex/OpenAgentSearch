@@ -105,6 +105,7 @@ export function Observability() {
         ["debug", t("调试", "Debug")],
         ["endpoint_test", t("接入点测试", "Endpoint test")],
         ["proxy_test", t("代理测试", "Proxy test")],
+        ["cache_background", t("缓存后台", "Cache background")],
       ],
     ],
     ["language", t("业务语言", "Business language"), []],

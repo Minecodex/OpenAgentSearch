@@ -1,6 +1,7 @@
 pub mod administrator;
 pub mod archive;
 pub mod article;
+pub mod cache;
 pub mod evidence;
 pub mod model;
 mod model_prompt;
@@ -184,6 +185,14 @@ pub struct Project {
     #[serde(default)]
     pub allow_snippets: bool,
     #[serde(default)]
+    pub cache_enabled: bool,
+    #[serde(default)]
+    pub cache_epoch: i64,
+    #[serde(default)]
+    pub cache_access_epoch: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_policy: Option<cache::PolicyOverrides>,
+    #[serde(default)]
     pub version: i64,
 }
 fn ten() -> usize {
@@ -233,6 +242,16 @@ pub struct Hit {
     pub url: String,
     pub title: String,
     pub snippet: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub published_at: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cached_summary_key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<cache::CachedOrigin>,
+    #[serde(default)]
+    pub coverage: cache::Coverage,
     #[serde(default)]
     pub content: Option<String>,
     #[serde(default)]
@@ -254,6 +273,14 @@ pub struct Snapshot {
     pub probes: HashMap<String, Value>,
     pub retention_days: i32,
     pub retention_version: i64,
+}
+
+impl Snapshot {
+    /// Safe execution metadata shared by foreground and maintenance histories.
+    pub fn recording(&self) -> Value {
+        json!({"project":self.project,"routes_version":self.routes["version"].as_u64().unwrap_or(0),
+            "endpoints":self.endpoints.iter().map(|e|json!({"id":e.id,"name":e.name,"version":e.version,"kind":e.kind,"provider":e.provider,"adapter":e.adapter,"timeout_ms":e.timeout_ms,"max_concurrency":e.max_concurrency,"rpm":e.rpm})).collect::<Vec<_>>()})
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

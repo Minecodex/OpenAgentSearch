@@ -8,11 +8,15 @@ OpenAgentSearch 提供三个同步业务接口。调用方可以搜索网页列�
 
 运行历史采用全局统一保留期，默认 7 天。修改后，所有项目的新请求、完整材料、明细及其统计贡献统一采用新天数，已有记录按原定时间到期。请求详情可在隔离 iframe 中回放归档网页的原布局，并渲染 Markdown 材料。[历史保留与回放](plan1/06-observability.md#layout-replay)
 
-## Plan 2 搜索缓存规划
+## Plan 2 搜索缓存
 
 Plan 2 用统一 embedding 与 Qdrant 复用历史问题，保存各来源已经取得的原始列表和完整正文。额外补文只针对本次实际返回的 Top K 或综合选用的 Top N，未入选原始候选保留已有材料，定时列表刷新不预取整榜正文。本期采用可配置的固定列表/正文 TTL，AI 页面分类及不同类型的 TTL 留作后续扩展。两个高置信问题命中继续按既有规则执行。[数量与按需补文](plan2/README.md#counts) · [当前固定 TTL](plan2/README.md#cache-ttl) · [双热点](plan2/01-hotness.md) · [缓存管理](plan2/03-cache-console.md)
 
 缓存模块通过稳定入口装配唯一活动的 Handler，切换直接采用新缓存空间，旧版本任务不执行且不复活。后台每轮派发使用最新配置，任务和存储读写共用一致性执行层。[Handler 架构](plan2/04-cache-architecture.md)
+
+各项目在创建/编辑界面通过“启用搜索缓存”开关单独控制，默认关闭。关闭时直接按项目路由处理，停止本项目缓存读写、按需补齐和热点刷新，已有材料保留到正常过期或回收。[项目开关及界面](plan2/README.md#project-cache-switch)
+
+部署配置、集群覆盖示例、缓存参数与自动化验证见 [缓存配置与验证](plan2/05-runtime.md)。
 
 ## 从哪里开始
 

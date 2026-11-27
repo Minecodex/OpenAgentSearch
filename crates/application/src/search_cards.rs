@@ -31,6 +31,11 @@ pub fn candidates(cards: &[SearchCard], chinese: bool) -> Vec<Hit> {
             "Search-page card material: verify its location, date and statistical scope; query suggestions are not facts."
         };
         groups.push(Hit {
+            summary: None,
+            cached_summary_key: None,
+            cache: None,
+            published_at: None,
+            coverage: oas_domain::cache::Coverage::Excerpt,
             url: card.url.clone(),
             title: title.chars().take(200).collect(),
             snippet: card.content.chars().take(1000).collect(),

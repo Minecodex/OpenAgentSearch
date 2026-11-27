@@ -27,6 +27,14 @@ export function fixture(port=18780, host='0.0.0.0'){
     if(url.pathname.startsWith('/slow/')){await new Promise(r=>setTimeout(r,1200));url.pathname=url.pathname.slice(5);}
     if(url.pathname==='/hold-article'){await new Promise(resolve=>{server.held??=[];server.held.push(resolve);});res.writeHead(200,{'Content-Type':'text/html'});res.end(body);return;}
     if(url.pathname==='/slow-article'){await new Promise(r=>setTimeout(r,8000));res.writeHead(200,{'Content-Type':'text/html'});res.end(body);return;}
+    if(url.pathname==='/cache-retry-later'){
+      res.writeHead(429,{'Content-Type':'text/html','Retry-After':'3600'});res.end('Please retry later');return;
+    }
+    if(url.pathname==='/cache-recover'){
+      if(server.cacheOriginGone){res.writeHead(410,{'Content-Type':'text/html'});res.end('<html><body>Removed by origin</body></html>');}
+      else {res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(body);}
+      return;
+    }
     if(url.pathname==='/refused'){res.writeHead(403,{'Content-Type':'text/html'});res.end('<html><body><main><h1>Forbidden</h1><p>Access denied by the site.</p></main></body></html>');return;}
     if(url.pathname==='/risk-article'){res.writeHead(429,{'Content-Type':'text/html'});res.end('<html><body>Request throttled</body></html>');return;}
     if(url.pathname==='/style.css'){res.writeHead(200,{'Content-Type':'text/css'});res.end('@font-face{font-family:ArchiveFixture;src:url("/font.woff2") format("woff2")}body{font-family:ArchiveFixture,sans-serif}main{display:grid;grid-template-columns:160px 1fr;gap:20px}aside{background:#aaccdd}aside::before{content:"Station: ";color:#123456}article{max-width:700px}h1{color:rgb(32,83,63)}');return;}
@@ -48,7 +56,9 @@ export function fixture(port=18780, host='0.0.0.0'){
       if(mode==='bad-model'){json({choices:[{message:{content:'not JSON'}}]});return;}
       if(mode==='slow-model')await new Promise(r=>setTimeout(r,5000));
       if(mode==='rewrite-failed' && task.kind==='rewrite'){json({error:{code:'temporarily_unavailable'}},503);return;}
-      if(task.kind==='rewrite')output={queries:mode==='duplicate-rewrite'?[task.query]:[task.query+((task.current_time||task.local_time)?' '+(task.current_time||task.local_time).slice(0,10):'')+(task.region?' '+task.region:'')+' measurement']};
+      if(task.kind==='cache_summary')output={summary:'A rain gauge measures rainfall in millimetres.'};
+      else if(task.kind==='rewrite' && task.query.includes('plan2-three'))output={queries:[task.query+' east',task.query+' west']};
+      else if(task.kind==='rewrite')output={queries:mode==='duplicate-rewrite'?[task.query]:[task.query+((task.current_time||task.local_time)?' '+(task.current_time||task.local_time).slice(0,10):'')+(task.region?' '+task.region:'')+' measurement']};
       else if(task.kind==='score'){
         output={scores:task.candidates.map((c,i)=>({candidate_id:c.candidate_id,relevant:mode!=='irrelevant',score:mode==='tied'?90:95-i}))};
         if(mode==='invalid-score'&&n===1)output.scores=[output.scores[0],{candidate_id:'unknown',relevant:true,score:100},...output.scores.slice(1).flatMap(s=>[s,s])];
@@ -81,6 +91,9 @@ export function fixture(port=18780, host='0.0.0.0'){
       if(req.method==='GET'&&query.includes('browser-risk')){res.writeHead(429,{'Content-Type':'text/html'});res.end('<html><body>Request throttled</body></html>');return;}
       if(query.includes('upstream-failure')){json({error:{code:'temporarily_unavailable'}},503);return;}
       let results=query.includes('no-match')||mode==='empty'?[]:[{url:page,title:'Rainfall field guide',snippet:'A rain gauge measures rainfall.',raw_content:input.include_raw_content?'# Rainfall\n\nA rain gauge measures rainfall.':undefined,content:input.need_content?'# Rainfall\n\nA rain gauge measures rainfall.':undefined}];
+      if(query.includes('plan2-') || mode==='cache')results=Array.from({length:10},(_,i)=>({...results[0],url:page+'?cache_page='+i,title:'Rainfall field guide '+i}));
+      if(query.includes('plan2-proof'))results=results.map(row=>({...row,title:'Ubuntu 13.04 Unity startup guide'}));
+      if(query.includes('plan2-three'))results=results.map((row,i)=>({...row,url:page+'?variant='+encodeURIComponent(query)+'&rank='+i}));
       if(['duplicate','invalid-score','tied','partial-segment','budget-segment'].includes(mode))results=[...results,{...results[0],url:page+'#duplicate'},{url:origin+'/article?second=1',title:'Second rainfall guide',snippet:'Daily rainfall readings.'}];
       if(mode==='mixed')results.push({url:'file:///invalid',title:'Invalid',snippet:''});
       if(mode==='missing-title')results=results.map(({title,...row})=>row);
@@ -94,6 +107,9 @@ export function fixture(port=18780, host='0.0.0.0'){
     }
     if(url.pathname==='/s' && url.searchParams.get('wd')?.includes('browser-risk')){res.writeHead(429,{'Content-Type':'text/html'});res.end('Search temporarily restricted');return;}
     if(url.pathname==='/s'){res.writeHead(200,{'Content-Type':'text/html'});res.end(searchDocument('baidu',url.searchParams.get('wd')||'',page));return;}
+    if(url.pathname==='/extract' && mode==='cache-guard' && server.refuseCacheRead){
+      json({results:[],failed_results:[{url:input.urls[0],error:'Access denied by target site'}]});return;
+    }
     if(url.pathname==='/extract'){if(mode==='emptycontent'){json({results:[],failed_results:[]});return;}json({results:[{url:input.urls[0],raw_content:'# Rainfall\n\nA rain gauge measures rainfall.'}],failed_results:[]});return;}
     if(url.pathname==='/v1/extract'){json({code:0,data:{url:input.url,title:'Rainfall field guide',content:mode==='emptycontent'?'':body,...(mode==='final'?{final_url:page+'?redirected=1'}:{})}});return;}
     if(url.pathname==='/v1/tools/fetch'){if(mode==='emptycontent'){json({title:'Empty',content:''});return;}json({title:'Rainfall field guide',content:'# Rainfall\n\nA rain gauge measures rainfall.'});return;}

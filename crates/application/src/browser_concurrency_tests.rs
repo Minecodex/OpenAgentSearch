@@ -128,6 +128,8 @@ async fn run(
         boot_id: "boot".into(),
     }]);
     let engine = Engine {
+        cache: None,
+        background: false,
         transport,
         scheduler: scheduler.clone(),
     };
