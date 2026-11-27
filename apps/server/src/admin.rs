@@ -16,6 +16,7 @@ use sqlx::Row;
 use std::collections::HashMap;
 pub fn router() -> Router<App> {
     Router::new()
+        .merge(crate::cache_api::router())
         .route("/diagnostics", get(crate::health::admin))
         .route("/settings/retention", get(get_retention).put(put_retention))
         .route("/language-routes", get(get_routes).put(put_routes))
@@ -201,7 +202,11 @@ async fn update(
     response(
         async {
             resource_kind(&kind)?;
-            app.repo.save(&kind, Some(&rid), parse(&body)?).await
+            let result = app.repo.save(&kind, Some(&rid), parse(&body)?).await?;
+            if kind == "projects" && result["cache_enabled"] == false {
+                app.scheduler.cancel_cache_project(&rid);
+            }
+            Ok(result)
         }
         .await,
         &h,

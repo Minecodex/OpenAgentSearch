@@ -53,3 +53,65 @@ ingress:
   className: ""
   host: ""
   tlsSecretName: ""
+cache:
+  enabled: false
+  handler: v1
+  matcher:
+    enabled: false
+    image: ""
+    existingClaim: ""
+    resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {memory: 3Gi}}
+    url: ""
+    profile: ""
+    existingSecret: ""
+    secretKey: api-key
+  existingSecret: ""
+  clusterDomain: cluster.local
+  listTtlSeconds: 1800
+  contentTtlSeconds: 21600
+  lookupTimeoutMs: 2000
+  taskTtlSeconds: 1800
+  taskMaxAttempts: 3
+  queueCapacity: 1024
+  summaryMaxInputTokens: 8192
+  maxObjectBytes: "8589934592"
+  maxSnapshots: 100000
+  embedding:
+    baseUrl: ""
+    model: ""
+    dimensions: 0
+    version: "1"
+    apiKey: ""
+    existingSecret: ""
+    secretKey: api-key
+  qdrant:
+    enabled: true
+    image: qdrant/qdrant:v1.20.0@sha256:9bfc89f9914fc14876a88c05270685921a55b8877b254a98bcc1cc2f0a424cd2
+    url: ""
+    apiKey: ""
+    replicas: 1
+    shards: 1
+    replicationFactor: 1
+    storage: 20Gi
+    storageClassName: ""
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {memory: 2Gi}}
+  valkey:
+    enabled: true
+    image: valkey/valkey:9.0.1-alpine@sha256:c106a0c03bcb23cbdf9febe693114cb7800646b11ca8b303aee7409de005faa8
+    url: ""
+    clusterNodes: []
+    password: ""
+    storage: 2Gi
+    storageClassName: ""
+    resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {memory: 512Mi}}
+  objects:
+    enabled: true
+    image: chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
+    endpoint: ""
+    bucket: oas-cache
+    region: us-east-1
+    accessKey: oas-cache
+    secretKey: ""
+    storage: 10Gi
+    storageClassName: ""
+    resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}

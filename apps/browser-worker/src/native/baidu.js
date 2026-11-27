@@ -32,7 +32,6 @@ const baiduSearch = (() => {
       if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.href.length > 2048 ||
           url.hostname === 'nourl.ubs.baidu.com' ||
           (['baidu.com', 'www.baidu.com'].includes(url.hostname) && url.pathname !== '/link')) return null;
-      url.hash = '';
       return url.href;
     } catch (_) { return null; }
   }

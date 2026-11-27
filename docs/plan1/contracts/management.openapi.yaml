@@ -1049,6 +1049,265 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/Ready'}
+  /admin/v1/cache/overview:
+    get:
+      operationId: cacheOverview
+      summary: 缓存库存、命中及任务消费概览
+      security:
+      - AdminSession: []
+      parameters:
+      - &cachepath001
+        in: query
+        name: project
+        schema:
+          type: string
+      - &cachepath002
+        in: query
+        name: origin
+        schema:
+          type: string
+      - &cachepath003
+        in: query
+        name: operation
+        schema:
+          type: string
+      - &cachepath004
+        in: query
+        name: since
+        schema:
+          type: integer
+      - &cachepath005
+        in: query
+        name: until
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheOverview'
+        default:
+          $ref: '#/components/responses/Failure'
+  /admin/v1/cache/tasks:
+    get:
+      operationId: cacheTasks
+      summary: 查询缓存后台任务
+      security:
+      - AdminSession: []
+      parameters:
+      - *cachepath001
+      - *cachepath002
+      - *cachepath003
+      - *cachepath004
+      - *cachepath005
+      - in: query
+        name: state
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - in: query
+        name: cursor
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheTasks'
+        default:
+          $ref: '#/components/responses/Failure'
+  /admin/v1/cache/tasks/{id}:
+    get:
+      operationId: cacheTask
+      summary: 查看缓存任务阶段和版本
+      security:
+      - AdminSession: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheTask'
+        default:
+          $ref: '#/components/responses/Failure'
+  /admin/v1/settings/cache-concurrency:
+    get:
+      operationId: getCacheConcurrency
+      summary: 后台浏览器并发
+      security:
+      - AdminSession: []
+      parameters: &cachepath006 []
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheConcurrencyView'
+        default:
+          $ref: '#/components/responses/Failure'
+    put:
+      operationId: putCacheConcurrency
+      summary: 修改后台浏览器并发
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - $ref: '#/components/parameters/SameOriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CacheConcurrencyWrite'
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheConcurrencyView'
+        '409':
+          $ref: '#/components/responses/Failure'
+        default:
+          $ref: '#/components/responses/Failure'
+  /admin/v1/settings/cache-policy:
+    get:
+      operationId: getCachePolicy
+      summary: 系统双热点默认策略
+      security:
+      - AdminSession: []
+      parameters: *cachepath006
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CachePolicyView'
+        default:
+          $ref: '#/components/responses/Failure'
+    put:
+      operationId: putCachePolicy
+      summary: 修改系统双热点默认策略
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - $ref: '#/components/parameters/SameOriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CachePolicyWrite'
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CachePolicyView'
+        '409':
+          $ref: '#/components/responses/Failure'
+        default:
+          $ref: '#/components/responses/Failure'
+  /admin/v1/settings/cache-model-budgets:
+    get:
+      operationId: getCacheModelBudget
+      summary: 后台模型预算
+      security:
+      - AdminSession: []
+      parameters: *cachepath006
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheModelBudgetView'
+        default:
+          $ref: '#/components/responses/Failure'
+    put:
+      operationId: putCacheModelBudget
+      summary: 修改后台模型预算
+      security:
+      - AdminSession: []
+        Csrf: []
+      parameters:
+      - $ref: '#/components/parameters/SameOriginHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CacheModelBudgetWrite'
+      responses:
+        '200':
+          description: 缓存管理结果。
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AdminEnvelope'
+                - properties:
+                    data:
+                      $ref: '#/components/schemas/CacheModelBudgetView'
+        '409':
+          $ref: '#/components/responses/Failure'
+        default:
+          $ref: '#/components/responses/Failure'
 components:
   securitySchemes:
     AdminSession: {type: apiKey, in: cookie, name: oas_admin_session}
@@ -1528,6 +1787,8 @@ components:
           description: 综合总结是否直接使用搜索列表标题和简介。开启后跳过正文获取和搜索随附正文，仍评分、按模型上下文总结并保留引用。reader_pools 可为空，单 URL 正文接口仍使用正文池。
           x-description-en: Summarize search titles and snippets directly. Skips article retrieval and inline articles while retaining scoring, context-aware synthesis and citations. Reader pools may be empty. The single-URL content operation still uses them.
         allow_snippets: {type: boolean}
+        cache_enabled: {type: boolean, default: false, description: 是否启用本项目的列表与正文缓存。}
+        cache_policy: {$ref: "#/components/schemas/ProjectCachePolicy"}
       required: [name, search_pools, reader_pools]
       additionalProperties: false
     ProjectUpdate:
@@ -1576,6 +1837,8 @@ components:
           description: 综合总结是否直接使用搜索列表标题和简介。开启后跳过正文获取和搜索随附正文，仍评分、按模型上下文总结并保留引用。reader_pools 可为空，单 URL 正文接口仍使用正文池。
           x-description-en: Summarize search titles and snippets directly. Skips article retrieval and inline articles while retaining scoring, context-aware synthesis and citations. Reader pools may be empty. The single-URL content operation still uses them.
         allow_snippets: {type: boolean}
+        cache_enabled: {type: boolean, default: false, description: 是否启用本项目的列表与正文缓存。}
+        cache_policy: {$ref: "#/components/schemas/ProjectCachePolicy"}
         expected_version: {type: integer, minimum: 1}
       required: [name, search_pools, reader_pools, model_endpoint_id, browser_proxy_pool_id,
         search_limit, source_limit, body_limit, summary_limit, rewrite_count, allow_snippets, expected_version]
@@ -1626,6 +1889,10 @@ components:
           description: 综合总结是否直接使用搜索列表标题和简介。开启后跳过正文获取和搜索随附正文，仍评分、按模型上下文总结并保留引用。reader_pools 可为空，单 URL 正文接口仍使用正文池。
           x-description-en: Summarize search titles and snippets directly. Skips article retrieval and inline articles while retaining scoring, context-aware synthesis and citations. Reader pools may be empty. The single-URL content operation still uses them.
         allow_snippets: {type: boolean}
+        cache_enabled: {type: boolean, default: false, description: 是否启用本项目的列表与正文缓存。}
+        cache_policy: {$ref: "#/components/schemas/ProjectCachePolicy"}
+        cache_epoch: {type: integer, minimum: 0, readOnly: true}
+        cache_access_epoch: {type: integer, minimum: 0, readOnly: true}
         id: {type: string, format: uuid}
         version: {type: integer, minimum: 1}
       required: [name, search_pools, reader_pools, model_endpoint_id, browser_proxy_pool_id,
@@ -1709,7 +1976,7 @@ components:
         upstream_calls: {type: integer, minimum: 0}
         model_calls: {type: integer, minimum: 0}
         incomplete: {type: boolean}
-        origin: {enum: [business, debug, endpoint_test, proxy_test]}
+        origin: {enum: [business, debug, endpoint_test, proxy_test, cache_background]}
         project_name: {type: [string, 'null']}
         language: {type: [string, 'null']}
         query_preview: {type: [string, 'null'], description: 问题或 URL。独立测试显示当时记录的资源名称。}
@@ -1799,6 +2066,7 @@ components:
       type: object
       required: [project, routes_version, endpoints]
       properties:
+        cache: {$ref: '#/components/schemas/CacheBinding'}
         project: {$ref: '#/components/schemas/RecordedProject'}
         routes_version: {type: integer, minimum: 0}
         endpoints:
@@ -1820,70 +2088,161 @@ components:
       additionalProperties: false
     TraceCandidate:
       type: object
-      required: [candidate_id, url, title, hits, relevant, score, selected, source_id, material]
+      required:
+      - candidate_id
+      - url
+      - title
+      - hits
+      - relevant
+      - score
+      - selected
+      - source_id
+      - material
       properties:
-        candidate_id: {type: string}
-        url: {type: string, format: uri}
-        title: {type: string}
-        snippet_preview: {type: [string, 'null']}
+        candidate_id:
+          type: string
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        snippet_preview:
+          type:
+          - string
+          - 'null'
         hits:
           type: array
           items:
             type: object
-            required: [variant_id, call_id, url, rank]
+            required:
+            - variant_id
+            - call_id
+            - url
+            - rank
             properties:
-              variant_id: {type: string}
-              call_id: {type: string}
-              url: {type: string, format: uri}
-              rank: {type: integer, minimum: 1}
+              variant_id:
+                type: string
+              call_id:
+                type: string
+              url:
+                type: string
+                format: uri
+              rank:
+                type: integer
+                minimum: 1
+              cache:
+                $ref: ./cache-origin.schema.yaml
             additionalProperties: false
-        relevant: {type: [boolean, 'null']}
-        score: {type: [integer, 'null'], minimum: 0, maximum: 100}
-        score_batch_id: {type: [string, 'null']}
-        score_call_id: {type: [string, 'null']}
-        selected: {type: [boolean, 'null']}
-        selection_reason: {type: [string, 'null']}
-        source_id: {type: [string, 'null']}
-        material_reason: {type: string}
-        material: {enum: [reader_body, inline_body, search_snippet, snippet, null]}
-        reader_call_ids: {type: array, items: {type: string}}
-        article_preview: {type: [string, 'null']}
+        relevant:
+          type:
+          - boolean
+          - 'null'
+        score:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 100
+        score_batch_id:
+          type:
+          - string
+          - 'null'
+        score_call_id:
+          type:
+          - string
+          - 'null'
+        selected:
+          type:
+          - boolean
+          - 'null'
+        selection_reason:
+          type:
+          - string
+          - 'null'
+        source_id:
+          type:
+          - string
+          - 'null'
+        material_reason:
+          type: string
+        material:
+          enum:
+          - cache_body
+          - reader_body
+          - inline_body
+          - search_snippet
+          - snippet
+          - null
+        reader_call_ids:
+          type: array
+          items:
+            type: string
+        article_preview:
+          type:
+          - string
+          - 'null'
         lengths:
           type: object
           properties:
-            text: {$ref: ./business.openapi.yaml#/components/schemas/Length}
-            markdown: {$ref: ./business.openapi.yaml#/components/schemas/Length}
-          required: [text, markdown]
+            text:
+              $ref: ./business.openapi.yaml#/components/schemas/Length
+            markdown:
+              $ref: ./business.openapi.yaml#/components/schemas/Length
+          required:
+          - text
+          - markdown
           additionalProperties: false
       additionalProperties: false
+
     Evidence:
       type: object
       properties:
         variants:
           type: array
-          items: {$ref: ./search-variant.schema.yaml}
-        candidates: {type: array, items: {$ref: '#/components/schemas/TraceCandidate'}}
+          items:
+            $ref: ./search-variant.schema.yaml
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraceCandidate'
         sources:
           type: array
           items:
             type: object
             properties:
-              source_id: {type: string, minLength: 1}
-              url: {type: string, minLength: 1}
-              title: {type: string}
+              source_id:
+                type: string
+                minLength: 1
+              url:
+                type: string
+                minLength: 1
+              title:
+                type: string
               ranks:
                 type: array
-                items: {type: integer, minimum: 0}
+                items:
+                  type: integer
+                  minimum: 0
                 minItems: 0
               variant_ids:
                 type: array
-                items: {type: string, minLength: 1}
+                items:
+                  type: string
+                  minLength: 1
                 minItems: 0
               score:
                 anyOf:
-                - {type: integer, minimum: 0, maximum: 100}
-                - {type: 'null'}
-            required: [source_id, url, title, ranks, variant_ids, score]
+                - type: integer
+                  minimum: 0
+                  maximum: 100
+                - type: 'null'
+            required:
+            - source_id
+            - url
+            - title
+            - ranks
+            - variant_ids
+            - score
             additionalProperties: false
           minItems: 0
         segments:
@@ -1891,18 +2250,116 @@ components:
           items:
             type: object
             properties:
-              source_id: {type: string, minLength: 1}
-              segment_id: {type: string, minLength: 1}
-              start_char: {type: integer, minimum: 0}
-              end_char: {type: integer, minimum: 0}
-              summary: {type: string}
-              cited: {type: boolean}
-              text_preview: {type: [string, 'null']}
-            required: [source_id, segment_id, start_char, end_char, summary, cited]
+              source_id:
+                type: string
+                minLength: 1
+              segment_id:
+                type: string
+                minLength: 1
+              start_char:
+                type: integer
+                minimum: 0
+              end_char:
+                type: integer
+                minimum: 0
+              summary:
+                type: string
+              cited:
+                type: boolean
+              text_preview:
+                type:
+                - string
+                - 'null'
+            required:
+            - source_id
+            - segment_id
+            - start_char
+            - end_char
+            - summary
+            - cited
             additionalProperties: false
           minItems: 0
-      required: [variants, candidates, sources, segments]
+        cache_lookups:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - lookup_id
+            - questions
+            - snapshot_ids
+            - degraded
+            - bypass
+            - hit
+            - search_needed
+            properties:
+              degraded:
+                type: boolean
+              bypass:
+                type: boolean
+              hit:
+                type: boolean
+              search_needed:
+                type: boolean
+              verification:
+                type: object
+                additionalProperties: false
+                required: [profile, state, elapsed_ms, reason, threshold, decisions]
+                properties:
+                  profile: {type: string}
+                  state: {enum: [no_candidates, verified, uncalibrated, material_changed, fallback]}
+                  shortlisted_question_ids: {type: array, maxItems: 8, items: {type: string}}
+                  question_texts:
+                    type: object
+                    maxProperties: 8
+                    additionalProperties: {type: string}
+                    description: 按送审问题标识保存当次历史问句。
+                  elapsed_ms: {type: [integer, 'null'], minimum: 0}
+                  reason: {type: [string, 'null']}
+                  threshold: {type: [number, 'null'], minimum: 0, maximum: 1}
+                  decisions:
+                    type: array
+                    maxItems: 8
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [question_id, label, reusable_score]
+                      properties:
+                        question_id: {type: string}
+                        label: {enum: [reusable, insufficient, conflict]}
+                        reusable_score: {type: number, minimum: 0, maximum: 1}
+              lookup_id:
+                type: string
+              span_id: {type: string, description: 本次读取所属执行阶段}
+              query: {type: string, description: 本次实际检索的问句}
+              matched_snapshots:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [snapshot_id, question_id, query, exact, source, collected_at]
+                  properties:
+                    snapshot_id: {type: string}
+                    question_id: {type: string}
+                    query: {type: string, description: 采集这份快照时使用的历史问句}
+                    exact: {type: boolean}
+                    source: {type: string, description: 采集来源接入点标识}
+                    collected_at: {type: integer, description: 快照采集时间戳（毫秒）}
+              questions:
+                type: array
+                items:
+                  type: string
+              snapshot_ids:
+                type: array
+                items:
+                  type: string
+      required:
+      - variants
+      - candidates
+      - sources
+      - segments
       additionalProperties: false
+
     Export:
       type: object
       properties:
@@ -1950,6 +2407,415 @@ components:
           type: array
           items: {$ref: ./business.openapi.yaml#/components/schemas/Message}
         error: {type: 'null'}
+    CacheHotPolicy:
+      type: object
+      additionalProperties: false
+      properties:
+        total_hot_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        recent_hot_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        recent_window_hours:
+          type: integer
+          minimum: 1
+          maximum: 2160
+      required:
+      - total_hot_percent
+      - recent_hot_percent
+      - recent_window_hours
+    ProjectCachePolicy:
+      anyOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          list:
+            anyOf:
+            - $ref: '#/components/schemas/CacheHotPolicy'
+            - type: 'null'
+          content:
+            anyOf:
+            - $ref: '#/components/schemas/CacheHotPolicy'
+            - type: 'null'
+        required: []
+      - type: 'null'
+    CacheBinding:
+      type: object
+      additionalProperties: false
+      properties:
+        handler: &cacheschema001
+          type: string
+        namespace: *cacheschema001
+        activation: &cacheschema002
+          type: integer
+          minimum: 0
+      required:
+      - handler
+      - namespace
+      - activation
+    CacheRate:
+      type: object
+      additionalProperties: false
+      properties:
+        hits: *cacheschema002
+        total: *cacheschema002
+        rate:
+          anyOf:
+          - type: number
+            minimum: 0
+            maximum: 1
+          - type: 'null'
+      required:
+      - hits
+      - total
+      - rate
+    CacheCapacity:
+      type: object
+      additionalProperties: false
+      properties:
+        configured_limit: *cacheschema002
+        effective_limit: *cacheschema002
+        ready_tabs: *cacheschema002
+        background_active: *cacheschema002
+        foreground_active: *cacheschema002
+        foreground_waiting: *cacheschema002
+        model_concurrency: *cacheschema002
+        model_rpm: *cacheschema002
+        capacity_insufficient: &cacheschema003
+          type: boolean
+      required:
+      - configured_limit
+      - effective_limit
+      - ready_tabs
+      - background_active
+      - foreground_active
+      - foreground_waiting
+      - model_concurrency
+      - model_rpm
+      - capacity_insufficient
+    CacheConcurrencyView:
+      type: object
+      additionalProperties: false
+      properties:
+        configured_limit: *cacheschema002
+        effective_limit: *cacheschema002
+        ready_tabs: *cacheschema002
+        background_active: *cacheschema002
+        foreground_active: *cacheschema002
+        foreground_waiting: *cacheschema002
+        model_concurrency: *cacheschema002
+        model_rpm: *cacheschema002
+        capacity_insufficient: *cacheschema003
+        version: *cacheschema002
+      required:
+      - configured_limit
+      - effective_limit
+      - ready_tabs
+      - background_active
+      - foreground_active
+      - foreground_waiting
+      - model_concurrency
+      - model_rpm
+      - capacity_insufficient
+      - version
+    CacheConcurrencyWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        configured_limit:
+          type: integer
+          minimum: 1
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - configured_limit
+      - expected_version
+    CachePolicyView:
+      type: object
+      additionalProperties: false
+      properties:
+        list:
+          $ref: '#/components/schemas/CacheHotPolicy'
+        content:
+          $ref: '#/components/schemas/CacheHotPolicy'
+        version: *cacheschema002
+      required:
+      - list
+      - content
+      - version
+    CachePolicyWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        list:
+          $ref: '#/components/schemas/CacheHotPolicy'
+        content:
+          $ref: '#/components/schemas/CacheHotPolicy'
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - list
+      - content
+      - expected_version
+    CacheModelBudgetView:
+      type: object
+      additionalProperties: false
+      properties:
+        concurrency:
+          type: integer
+          minimum: 1
+        rpm:
+          type: integer
+          minimum: 1
+        version: *cacheschema002
+      required:
+      - concurrency
+      - rpm
+      - version
+    CacheModelBudgetWrite:
+      type: object
+      additionalProperties: false
+      properties:
+        concurrency:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        rpm:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - concurrency
+      - rpm
+      - expected_version
+    CacheTask:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *cacheschema001
+        project: *cacheschema001
+        kind: *cacheschema001
+        target: *cacheschema001
+        reason: *cacheschema001
+        state: *cacheschema001
+        parent: *cacheschema001
+        origin: *cacheschema001
+        operation: *cacheschema001
+        handler_version: *cacheschema001
+        cache_namespace: *cacheschema001
+        project_name:
+          anyOf:
+          - *cacheschema001
+          - type: 'null'
+        input:
+          type: object
+        activation_id: *cacheschema002
+        project_cache_epoch: *cacheschema002
+        payload_version: *cacheschema002
+        attempts: *cacheschema002
+        attempt_limit: {type: integer, minimum: 1}
+        execution_request: {type: [string, 'null']}
+        merged: *cacheschema002
+        created_at: *cacheschema002
+        deadline: *cacheschema002
+        available_at: *cacheschema002
+        finished_at:
+          anyOf:
+          - *cacheschema002
+          - type: 'null'
+        last_error:
+          anyOf:
+          - *cacheschema001
+          - type: 'null'
+        phases:
+          type: array
+          items:
+            type: object
+      required:
+      - id
+      - project
+      - kind
+      - target
+      - reason
+      - state
+      - parent
+      - origin
+      - operation
+      - handler_version
+      - cache_namespace
+      - project_name
+      - input
+      - activation_id
+      - project_cache_epoch
+      - payload_version
+      - attempts
+      - attempt_limit
+      - execution_request
+      - merged
+      - created_at
+      - deadline
+      - available_at
+      - finished_at
+      - last_error
+      - phases
+    CacheTasks:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CacheTask'
+        next_cursor:
+          anyOf:
+          - *cacheschema002
+          - type: 'null'
+      required:
+      - items
+      - next_cursor
+    CacheOverview:
+      type: object
+      additionalProperties: false
+      properties:
+        as_of: *cacheschema002
+        since: *cacheschema002
+        scope:
+          anyOf:
+          - *cacheschema001
+          - type: 'null'
+        inventory:
+          type: object
+          additionalProperties: false
+          properties:
+            questions: *cacheschema002
+            snapshots: *cacheschema002
+            pages: *cacheschema002
+            summaries: *cacheschema002
+          required:
+          - questions
+          - snapshots
+          - pages
+          - summaries
+        list:
+          $ref: '#/components/schemas/CacheRate'
+        content:
+          $ref: '#/components/schemas/CacheRate'
+        outcomes:
+          type: object
+          additionalProperties: *cacheschema002
+        states:
+          type: object
+          additionalProperties: *cacheschema002
+        queue:
+          type: object
+          additionalProperties: false
+          properties:
+            waiting: *cacheschema002
+            oldest_ms: *cacheschema002
+            p95_ms: *cacheschema002
+            capacity: *cacheschema002
+          required:
+          - waiting
+          - oldest_ms
+          - p95_ms
+          - capacity
+        traffic:
+          type: object
+          additionalProperties: false
+          properties:
+            created: *cacheschema002
+            completed: *cacheschema002
+            evicted: *cacheschema002
+            ignored: *cacheschema002
+            attempts: *cacheschema002
+            per_minute:
+              type: number
+              minimum: 0
+          required:
+          - created
+          - completed
+          - evicted
+          - ignored
+          - attempts
+          - per_minute
+        statistics:
+          const: recorded_samples
+        browser:
+          $ref: '#/components/schemas/CacheCapacity'
+        binding:
+          $ref: '#/components/schemas/CacheBinding'
+        matcher:
+          type: object
+          additionalProperties: false
+          required: [configured, profile]
+          properties:
+            configured: {type: boolean}
+            profile: {type: string}
+        embedding:
+          type: object
+          additionalProperties: false
+          properties:
+            configured: *cacheschema003
+            version: *cacheschema001
+            ready: {type: boolean}
+          required:
+          - configured
+          - version
+          - ready
+        objects:
+          type: object
+          additionalProperties: false
+          properties:
+            configured: *cacheschema003
+          required:
+          - configured
+        storage:
+          type: object
+          additionalProperties: false
+          required: [as_of, object_bytes, max_object_bytes, snapshots, max_snapshots, write_paused]
+          properties:
+            as_of: {type: integer}
+            object_bytes: {type: integer, minimum: 0}
+            max_object_bytes: {type: integer, minimum: 1}
+            snapshots: {type: integer, minimum: 0}
+            max_snapshots: {type: integer, minimum: 1}
+            write_paused: {type: boolean}
+        hotness:
+          type: object
+          additionalProperties: false
+          required: [registry, total_hot, recent_hot, as_of]
+          properties:
+            registry: {type: integer, minimum: 0}
+            total_hot: {type: integer, minimum: 0}
+            recent_hot: {type: integer, minimum: 0}
+            as_of: {type: integer}
+      required:
+      - as_of
+      - since
+      - scope
+      - inventory
+      - list
+      - content
+      - outcomes
+      - states
+      - queue
+      - traffic
+      - statistics
+      - browser
+      - binding
+      - embedding
+      - objects
+      - storage
+      - hotness
+
   parameters:
     SameOriginHeader:
       in: header
@@ -2018,7 +2884,7 @@ components:
       name: origin
       schema:
         type: string
-        enum: [business, debug, endpoint_test, proxy_test]
+        enum: [business, debug, endpoint_test, proxy_test, cache_background]
       required: false
     Capability: {in: query, name: kind, schema: {enum: [search, reader, model]}}
     BusinessLanguage: {in: query, name: language, schema: {type: string, minLength: 1}}

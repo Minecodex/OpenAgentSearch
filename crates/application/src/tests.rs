@@ -335,6 +335,8 @@ async fn execute(mode: &'static str, mut snap: Snapshot, op: &str) -> (Value, Ar
         inputs: Mutex::new(vec![]),
     });
     let engine = Engine {
+        cache: None,
+        background: false,
         transport: transport.clone(),
         scheduler: Scheduler::default(),
     };
@@ -445,6 +447,8 @@ async fn cancellation_while_opening_browser_does_not_dispatch_a_search_or_leak_a
         boot_id: "boot".into(),
     }]);
     let engine = Engine {
+        cache: None,
+        background: false,
         transport: transport.clone(),
         scheduler: scheduler.clone(),
     };
@@ -514,6 +518,8 @@ async fn a08_slow_material_leaves_synthesis_time_and_completed_evidence_in_the_s
     });
     let scheduler = Scheduler::default();
     let engine = Engine {
+        cache: None,
+        background: false,
         transport: transport.clone(),
         scheduler: scheduler.clone(),
     };
@@ -566,6 +572,8 @@ async fn a08_preflight_context_rejection_never_commits_rpm_or_creates_a_sent_cal
         peak: Default::default(),
     });
     let engine = Engine {
+        cache: None,
+        background: false,
         transport,
         scheduler: scheduler.clone(),
     };
@@ -615,6 +623,8 @@ async fn completed_search_evidence_survives_cancel_and_timeout() {
             peak: Default::default(),
         });
         let engine = Arc::new(Engine {
+            cache: None,
+            background: false,
             transport: transport.clone(),
             scheduler: Scheduler::default(),
         });
@@ -701,6 +711,8 @@ async fn browser_context_time_is_not_counted_as_navigation() {
         boot_id: "boot".into(),
     }]);
     let engine = Engine {
+        cache: None,
+        background: false,
         transport,
         scheduler,
     };

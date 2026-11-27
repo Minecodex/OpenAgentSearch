@@ -64,6 +64,7 @@ spec:
             - {name: OAS_BROWSER_SERVICE, value: "{{ $.Release.Name }}-browser"}
             - {name: OAS_BROWSER_SLOTS, value: {{ $.Values.browser.slots | quote }}}
             - {name: OAS_RETENTION_DAYS, value: {{ $.Values.history.retentionDays | quote }}}
+            {{- include "oas.cache.env" $ | nindent 12 }}
             - {name: OAS_SEARXNG_ENABLED, value: {{ $.Values.searxng.enabled | quote }}}
             - {name: OAS_CRAWL4AI_ENABLED, value: {{ $.Values.crawl4ai.enabled | quote }}}
             - {name: OAS_SEARXNG_URL, value: "http://{{ $.Release.Name }}-searxng:8080"}

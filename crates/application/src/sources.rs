@@ -86,7 +86,7 @@ impl Run<'_> {
         let read = if let Some(page) = page {
             Ok(page)
         } else {
-            self.pool("reader","extract",json!({"url":hit.url,"language":language,"source_id":source,"candidate_id":candidate["candidate_id"]}),command).await.map(|page|(page.value,page.article.unwrap(),page.call_id,"reader_body"))
+            self.pool("reader","extract",json!({"url":hit.url,"language":language,"source_id":source,"candidate_id":candidate["candidate_id"]}),command).await.map(|page|{let kind=if page.value["_cache"]==true{"cache_body"}else{"reader_body"};(page.value,page.article.unwrap(),page.call_id,kind)})
         };
         let mut loss = false;
         let reasons = Vec::new();
@@ -108,6 +108,9 @@ impl Run<'_> {
                 }
                 if !self.snapshot.project.allow_snippets
                     || matches!(error.code.as_str(), "ACCESS_DENIED" | "URL_NOT_ALLOWED")
+                    || oas_domain::cache::OriginObservation::from_error(&error)
+                        .is_some_and(oas_domain::cache::OriginObservation::stops_fetch)
+                    || error.details["source_gone"] == true
                     || hit.snippet.trim().is_empty()
                 {
                     return Ok(SourceResult::missing(error));
@@ -127,6 +130,9 @@ impl Run<'_> {
             self.snapshot.project.body_limit,
         );
         self.material(&call, &hit.url, &value, Some(&article), Some(source));
+        if !self.snapshot.project.summary_snippets_only {
+            self.cache_selected(std::slice::from_ref(&hit.url)).await;
+        }
         if data["text"].as_str().is_none_or(str::is_empty) {
             return Ok(SourceResult::missing(
                 oas_domain::Error::new(

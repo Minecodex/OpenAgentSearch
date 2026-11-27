@@ -13,7 +13,7 @@ function passage(body){
 export function parseModelPrompt(messages){
  const system=messages?.find(message=>message.role==='system')?.content||'',query=messages?.find(message=>message.role==='user')?.content||'';
  const title=field(system,'任务');
- const kind=({'查询改写':'rewrite','候选评分':'score','单段分析':'segments','段落批量分析':'segments','来源摘要压缩':'compress','原文整合总结':'synthesis','摘要整合':'synthesis'})[title];
+ const kind=({'网页原语言简介':'cache_summary','查询改写':'rewrite','候选评分':'score','单段分析':'segments','段落批量分析':'segments','来源摘要压缩':'compress','原文整合总结':'synthesis','摘要整合':'synthesis'})[title];
  const task={kind,query};
  const language=field(system,'输出语言');if(language&&!language.includes('沿用'))task.language=language;
  const region=field(system,'当前地区');if(region&&!region.startsWith('未知'))task.region=region;

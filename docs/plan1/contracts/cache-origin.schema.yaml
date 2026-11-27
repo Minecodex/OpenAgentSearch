@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: CachedOrigin
+type: object
+additionalProperties: false
+required:
+- lookup_id
+- snapshot_id
+- call_id
+- source
+- collected_at
+properties:
+  lookup_id:
+    type: string
+    minLength: 1
+  snapshot_id:
+    type: string
+    minLength: 1
+  call_id:
+    type: string
+    minLength: 1
+  source:
+    type: string
+    minLength: 1
+  collected_at:
+    type: integer
+    minimum: 0

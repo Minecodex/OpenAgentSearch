@@ -59,7 +59,7 @@ test('validation, optimistic concurrency, references and sessions are enforced',
   assert.equal((await business('list',{query:''},400)).error.code,'INVALID_ARGUMENT');
   assert.equal((await business('list',{query:'x',unexpected:true},400)).error.code,'INVALID_ARGUMENT');
   assert.equal((await business('list',{query:'x'},401,'wrong')).error.code,'UNAUTHORIZED');
-  const {id,version,...body}=project;
+  const {id,version,cache_epoch,cache_access_epoch,...body}=project;
   await call('/admin/v1/projects/'+id,{...body,expected_version:version},'PUT');
   await call('/admin/v1/projects/'+id,{...body,expected_version:version},'PUT',409);
   await call('/admin/v1/endpoints/'+endpoint.id+'?expected_version='+endpoint.version,undefined,'DELETE',409);

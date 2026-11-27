@@ -12,11 +12,12 @@ impl Run<'_> {
         for attempt in 0..if task == "score" { 1 } else { 2 } {
             let queued = Instant::now();
             let lease = self
-                .bounded(
-                    self.engine
-                        .scheduler
-                        .model_permit(&endpoint, self.request, &self.cancel),
-                )
+                .bounded(self.engine.scheduler.model_permit_class(
+                    &endpoint,
+                    self.request,
+                    &self.cancel,
+                    self.engine.background,
+                ))
                 .await?;
             match self
                 .call(
@@ -235,6 +236,9 @@ fn normalize_no_evidence(task: &str, value: &mut Value, input: &Value) -> bool {
 }
 pub(crate) fn valid_output(task: &str, value: &Value, input: &Value) -> bool {
     match task {
+        "cache_summary" => value["summary"]
+            .as_str()
+            .is_some_and(|s| !s.trim().is_empty()),
         "rewrite" => value["queries"]
             .as_array()
             .is_some_and(|v| v.iter().all(Value::is_string)),

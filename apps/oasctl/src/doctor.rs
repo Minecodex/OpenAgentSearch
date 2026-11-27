@@ -70,6 +70,65 @@ pub fn run(c: &Cli) -> Result<()> {
                 );
             }
         }
+        let env = api["spec"]["template"]["spec"]["containers"][0]["env"].as_array();
+        if env.is_some_and(|items| items.iter().any(|e| e["name"] == "OAS_CACHE_HANDLER")) {
+            let value = |name: &str| {
+                env.and_then(|items| items.iter().find(|e| e["name"] == name))
+                    .and_then(|e| e["value"].as_str())
+                    .unwrap_or("")
+            };
+            report.check(
+                "cache-embedding-configuration",
+                if !value("OAS_CACHE_EMBEDDING_BASE_URL").is_empty()
+                    && !value("OAS_CACHE_EMBEDDING_MODEL").is_empty()
+                    && value("OAS_CACHE_EMBEDDING_DIMENSIONS")
+                        .parse::<usize>()
+                        .is_ok_and(|v| v > 0)
+                {
+                    Ok(
+                        "configured; live model quality and credentials are not tested by doctor"
+                            .into(),
+                    )
+                } else {
+                    Err(anyhow::anyhow!(
+                        "cache embedding is incomplete; project requests use ordinary routing"
+                    ))
+                },
+            );
+            if value("OAS_CACHE_HANDLER") == "v2" {
+                let profile = value("OAS_CACHE_MATCHER_PROFILE");
+                report.check(
+                    "cache-matcher-configuration",
+                    if !value("OAS_CACHE_MATCHER_URL").is_empty() && profile.len() == 64 {
+                        Ok(format!("configured profile {profile}"))
+                    } else {
+                        Err(anyhow::anyhow!(
+                            "v2 matcher is unconfigured; only exact cache entries can be reused"
+                        ))
+                    },
+                );
+            }
+            let sets = read_json(c.kubectl().args([
+                "get",
+                "statefulsets",
+                "-l",
+                &format!("app.kubernetes.io/instance={}", c.release),
+                "-o",
+                "json",
+            ]));
+            if let Ok(sets) = sets {
+                for set in sets["items"].as_array().into_iter().flatten().filter(|s| {
+                    s["metadata"]["name"]
+                        .as_str()
+                        .is_some_and(|n| n.starts_with(&format!("{}-cache-", c.release)))
+                }) {
+                    let name = set["metadata"]["name"].as_str().unwrap_or("cache");
+                    let desired = set["spec"]["replicas"].as_u64().unwrap_or(1);
+                    let ready = set["status"]["readyReplicas"].as_u64().unwrap_or(0);
+                    report.check(name,if ready>=desired {Ok(format!("ready={ready}/{desired}; inspect cache management for runtime consumption"))}else{Err(anyhow::anyhow!("ready={ready}/{desired}; inspect cache Pod/PVC status"))});
+                }
+            }
+        }
         let account = api["spec"]["template"]["spec"]["serviceAccountName"]
             .as_str()
             .unwrap_or("default");

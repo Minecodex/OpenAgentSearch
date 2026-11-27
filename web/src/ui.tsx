@@ -98,6 +98,7 @@ export function Field({
   autoComplete,
   placeholder,
   multiline = false,
+  disabled = false,
 }: {
   label: string;
   value: string | number;
@@ -109,9 +110,10 @@ export function Field({
   autoComplete?: HTMLInputAutoCompleteAttribute;
   placeholder?: string;
   multiline?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <TextField className="field" isRequired={required}>
+    <TextField className="field" isRequired={required} isDisabled={disabled}>
       <Label>{label}</Label>
       {multiline ? (
         <TextArea
@@ -140,15 +142,18 @@ export function Select({
   value,
   change,
   options,
+  disabled = false,
 }: {
   label: string;
   value: string;
   change: (v: string) => void;
   options: { value: string; label: string }[];
+  disabled?: boolean;
 }) {
   return (
     <HeroSelect
       className="field oas-select"
+      isDisabled={disabled}
       value={"item:" + value}
       onChange={(key) => change(String(key || "item:").slice(5))}
     >

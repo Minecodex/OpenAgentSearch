@@ -94,7 +94,7 @@ async fn inner(
         let endpoint: Endpoint =
             serde_json::from_value(resource.clone()).map_err(|_| Error::internal())?;
         let project: Project = serde_json::from_value(
-            json!({"id":id(),"name":"Capability test","search_pools":[],"reader_pools":[]}),
+            json!({"id":id(),"name":"Capability test","search_pools":[],"reader_pools":[],"cache_enabled":true}),
         )
         .unwrap();
         let mut probes = HashMap::new();

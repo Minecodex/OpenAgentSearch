@@ -1,0 +1,29 @@
+# Overlay on values.yaml; supply the named Secret before installation.
+# The API remains a single scheduling owner. These replicas scale the index.
+cache:
+  enabled: true
+  existingSecret: oas-cache-credentials
+  embedding:
+    baseUrl: https://embedding.example.com/v1
+    model: multilingual-embedding
+    dimensions: 768
+    version: "1"
+    existingSecret: oas-cache-credentials
+    secretKey: embedding-api-key
+  qdrant:
+    replicas: 3
+    shards: 6
+    replicationFactor: 2
+    storage: 100Gi
+    storageClassName: nvme
+  valkey:
+    enabled: false
+    clusterNodes:
+      - redis://valkey-a:6379
+      - redis://valkey-b:6379
+      - redis://valkey-c:6379
+  objects:
+    enabled: false
+    endpoint: https://s3.example.com
+    bucket: oas-cache
+    region: us-east-1

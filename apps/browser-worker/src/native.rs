@@ -250,6 +250,20 @@ impl Browser {
             .map_err(|_| anyhow::anyhow!("UPSTREAM_TIMEOUT"))?
             .context("native host disconnected")?;
         if let Some(code) = value["error"].as_str() {
+            if let Some(status) = value["details"]["source_status"]
+                .as_u64()
+                .filter(|s| (400..600).contains(s))
+            {
+                return Err(anyhow::Error::new(crate::SourceStatus {
+                    code: code.into(),
+                    status: status as u16,
+                    retry_after_ms: value["details"]["retry_after_ms"].as_i64(),
+                    url: value["details"]["source_url"]
+                        .as_str()
+                        .unwrap_or_default()
+                        .into(),
+                }));
+            }
             bail!(
                 "{}",
                 match code {

@@ -79,6 +79,8 @@ export interface components {
             current_time?: string;
         };
         SearchItem: {
+            /** @description 可选长简介，原生来源直接传递，页级简介使用网页原语言。 */
+            summary?: string;
             /**
              * Format: uri
              * @description 结果网页地址。

@@ -66,6 +66,45 @@ export function SearchCards({cards,className="search-hit engine-card"}: {cards:E
     <a href={card.url} target="_blank" rel="noreferrer">{t("查看搜索页","View search page")}</a>
   </article>)}</>;
 }
+export function SearchResultRows({ items, openCandidate, sourceCaption }: {
+  items: Entity[];
+  openCandidate?: (id: string) => void;
+  sourceCaption?: (item: Entity) => string | undefined;
+}) {
+  const { t } = useApp();
+  return <>{items.map((item, i) => {
+    const address = /^https?:\/\//i.test(item.url || "") ? item.url : undefined;
+    const title = item.title || item.url || t("未记录标题", "Title not recorded");
+    const inspect = openCandidate && item.candidate_id ? () => openCandidate(item.candidate_id) : undefined;
+    const origin = sourceCaption?.(item);
+    return <article className="search-hit hit" key={i + ":" + (item.url || "")}>
+      <span className="rank">{String(i + 1).padStart(2, "0")}</span>
+      <div>
+        <h3>{inspect
+          ? <button type="button" className="row-link" onClick={inspect}>{title}</button>
+          : address ? <a href={address} target="_blank" rel="noreferrer">{title}</a> : title}</h3>
+        {inspect && address
+          ? <a className="source-address" href={address} title={item.url} target="_blank" rel="noreferrer">{item.url}</a>
+          : <span className="source-address" title={item.url}>{item.url}</span>}
+        {item.snippet && <p>{item.snippet}</p>}
+        {origin && <small className="muted">{origin}</small>}
+        {item.summary && <details className="search-long-summary"><summary>{t("AI 简介", "AI summary")}</summary><p>{item.summary}</p></details>}
+      </div>
+    </article>;
+  })}</>;
+}
+
+export function EngineAnswer({ answer }: { answer: Entity }) {
+  const { t } = useApp();
+  return <article className="search-hit engine-answer">
+    <h3>{answer.engine === "google" ? "Google" : t("百度", "Baidu")} · {t("AI 回答", "AI answer")}</h3>
+    <MarkdownView text={answer.content} />
+    <ul>{(answer.sources || []).map((source: Entity) => (
+      <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title || source.url}</a></li>
+    ))}</ul>
+  </article>;
+}
+
 export function Result({
   result,
   onCitation,
@@ -89,27 +128,8 @@ export function Result({
     return (
       <div className="hit-list">
         <SearchCards cards={data.cards || []} />
-        {data.engine_answer && (
-          <article className="search-hit engine-answer">
-            <h3>{data.engine_answer.engine === "google" ? "Google" : t("百度", "Baidu")} · {t("AI 回答", "AI answer")}</h3>
-            <MarkdownView text={data.engine_answer.content} />
-            <ul>{data.engine_answer.sources.map((source: Entity) => (
-              <li key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title || source.url}</a></li>
-            ))}</ul>
-          </article>
-        )}
-        {data.items.map((item: Entity, i: number) => (
-          <article className="search-hit hit" key={item.url + i}>
-            <span className="rank">{String(i + 1).padStart(2, "0")}</span>
-            <div>
-              <a href={item.url} target="_blank" rel="noreferrer">
-                <h3>{item.title || item.url}</h3>
-              </a>
-              <span className="source-address">{item.url}</span>
-              <p>{item.snippet}</p>
-            </div>
-          </article>
-        ))}
+        {data.engine_answer && <EngineAnswer answer={data.engine_answer} />}
+        <SearchResultRows items={data.items} />
         {!data.items.length && !data.engine_answer && !data.cards?.length && (
           <Empty>{t("没有找到相关网页", "No matching pages found")}</Empty>
         )}

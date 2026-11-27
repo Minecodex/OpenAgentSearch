@@ -17,6 +17,7 @@ from openapi_spec_validator import validate
 CONTRACTS = Path(__file__).resolve().parent.parent / 'docs/plan1/contracts'
 BASE = os.environ.get('OAS_TEST_API', 'http://127.0.0.1:18080')
 CACHE = {}
+ERRORS = []
 
 def authenticated_response(request):
     for attempt in range(2):
@@ -54,9 +55,11 @@ def schema_validator(schema):
 def check(schema, value, name):
     errors = list(schema_validator(schema).iter_errors(value))
     if errors:
-        raise AssertionError(name + ': ' + '\n'.join(str(list(e.path)) + ': ' + e.message[:600] for e in errors[:8]))
+        ERRORS.append(name + ': ' + '\n'.join(str(list(e.path)) + ': ' + e.message[:600] for e in errors[:8]))
 
 def run():
+    matcher = CONTRACTS.parents[1] / 'plan2' / 'cache-matcher.openapi.yaml'
+    validate(document(matcher), base_uri=matcher.as_uri())
     for group in ['business', 'management']:
         path = CONTRACTS / (group + '.openapi.yaml')
         validate(document(path), base_uri=path.as_uri())
@@ -79,7 +82,7 @@ def run():
         for item in get(endpoint + '?'+urlencode({'limit':100,**({'from':since} if endpoint in ['requests','endpoint-calls'] else {})}))['items']:
             check(schema, item, endpoint)
             count += 1
-    for endpoint, schema in [('settings/retention', 'RetentionSettings'), ('language-routes', 'LanguageRoutes'), ('requests/aggregates', 'Aggregates'), ('endpoint-statistics', 'Statistics')]:
+    for endpoint, schema in [('settings/retention', 'RetentionSettings'), ('language-routes', 'LanguageRoutes'), ('requests/aggregates', 'Aggregates'), ('endpoint-statistics', 'Statistics'), ('cache/overview','CacheOverview'), ('settings/cache-concurrency','CacheConcurrencyView'), ('settings/cache-policy','CachePolicyView'), ('settings/cache-model-budgets','CacheModelBudgetView')]:
         if schema not in schemas:
             schema = next(key for key in schemas if key.startswith('Retention') and key != 'RetentionWrite') if endpoint.startswith('settings') else schema
         check(schema, get(endpoint), endpoint)
@@ -93,6 +96,8 @@ def run():
         for span in detail['spans']:
             check('SpanDetail', get('requests/' + rid + '/spans/' + span['span_id']), 'span')
         count += 3 + len(detail['spans'])
+    if ERRORS:
+        raise AssertionError('\n'.join(dict.fromkeys(ERRORS)))
     print(f'OpenAPI and {count} live objects valid')
 
 if __name__ == '__main__':

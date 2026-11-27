@@ -48,4 +48,4 @@ export function blockDiagnostics(seconds=3){
  const container=process.env.OAS_TEST_DB;assert.match(container||'',/^oas-local-[a-f0-9]{8}-db$/);
  return new Promise((resolve,reject)=>{const child=spawn('docker',['exec',container,'psql','-X','-U','oas','-d','oas','-v','ON_ERROR_STOP=1','-c',`BEGIN;LOCK endpoint_calls IN ACCESS EXCLUSIVE MODE;SELECT pg_sleep(${Number(seconds)});COMMIT;`],{stdio:'ignore'});child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(Error('diagnostic lock failed')));});
 }
-export function editable(resource){const{version,id,managed_by,availability,has_secret,last_test,ready_pods,default_network_google_probe,...body}=resource;return {...body,expected_version:version};}
+export function editable(resource){const{version,id,cache_epoch,cache_access_epoch,managed_by,availability,has_secret,last_test,ready_pods,default_network_google_probe,...body}=resource;return {...body,expected_version:version};}

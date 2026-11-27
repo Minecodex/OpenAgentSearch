@@ -1,0 +1,101 @@
+openapi: 3.1.0
+info: {title: OpenAgentSearch Cache Reuse Matcher, version: '1'}
+paths:
+  /v1/cache/match:
+    post:
+      operationId: matchCacheSources
+      summary: 复核同一项目范围内的候选快照材料
+      security: [{bearer: []}, {}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input_format, embedding_version, profile, budget_ms, query, candidates]
+              properties:
+                profile: {$ref: '#/components/schemas/Profile'}
+                input_format: {const: oas-cache-material-v1}
+                embedding_version: {$ref: '#/components/schemas/Profile'}
+                budget_ms: {type: integer, minimum: 1}
+                query:
+                  type: object
+                  required: [text]
+                  properties:
+                    text: {type: string, minLength: 1, maxLength: 2048}
+                    language: {type: [string, 'null']}
+                    time_range: {enum: [day, month, year, null]}
+                    region: {type: [string, 'null']}
+                candidates:
+                  type: array
+                  minItems: 1
+                  maxItems: 8
+                  items:
+                    type: object
+                    required: [question_id, question, materials]
+                    properties:
+                      question_id: {type: string, minLength: 1, maxLength: 128}
+                      question: {type: string, minLength: 1, maxLength: 2048}
+                      materials:
+                        type: array
+                        minItems: 1
+                        maxItems: 3
+                        items:
+                          type: object
+                          required: [title, snippet]
+                          properties:
+                            title: {type: string, maxLength: 160}
+                            snippet: {type: string, maxLength: 320}
+                            summary: {type: [string, 'null'], maxLength: 320}
+      responses:
+        '200':
+          description: 固定模型和校准配置下的复核结果。threshold 为空表示该语言尚未取得复用资格，可以直接返回空 decisions。
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [profile, threshold, decisions]
+                allOf:
+                  - if: {properties: {threshold: {type: number}}}
+                    then: {properties: {decisions: {minItems: 1}}}
+                properties:
+                  profile: {$ref: '#/components/schemas/Profile'}
+                  threshold: {type: [number, 'null'], minimum: 0, maximum: 1}
+                  decisions:
+                    type: array
+                    minItems: 0
+                    maxItems: 8
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [question_id, label, reusable_score]
+                      properties:
+                        question_id: {type: string}
+                        label: {enum: [reusable, insufficient, conflict]}
+                        reusable_score: {type: number, minimum: 0, maximum: 1}
+        '400': {description: 输入材料或截止时间无效}
+        '401': {description: 凭据无效}
+        '409': {description: 请求的模型配置与服务不匹配}
+        '413': {description: 请求过大}
+        '503': {description: 推理不可用或执行容量已满}
+        '504': {description: 本次复核已超过调用方剩余截止时间}
+  /health/ready:
+    get:
+      operationId: cacheMatcherReady
+      responses:
+        '200':
+          description: 模型和分类头完成装载
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ready,profile]
+                properties:
+                  ready: {const: true}
+                  profile: {$ref: '#/components/schemas/Profile'}
+components:
+  securitySchemes:
+    bearer: {type: http, scheme: bearer}
+  schemas:
+    Profile: {type: string, pattern: '^[a-f0-9]{64}$'}

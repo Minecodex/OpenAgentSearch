@@ -13,3 +13,5 @@ serde_json.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 futures.workspace = true
+tracing.workspace = true
+jieba-rs = "0.11"

@@ -31,12 +31,12 @@ async fn isolated() -> (Repository, Repository, String) {
     (repo, control, schema)
 }
 async fn cleanup(repo: Repository, control: Repository, schema: String) {
-    repo.pool.close().await;
+    repo.close().await;
     sqlx::query(&format!("DROP SCHEMA {schema} CASCADE"))
         .execute(&control.pool)
         .await
         .unwrap();
-    control.pool.close().await;
+    control.close().await;
 }
 
 #[tokio::test]

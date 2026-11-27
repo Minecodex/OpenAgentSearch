@@ -1,5 +1,7 @@
 mod admin;
 mod administrator;
+mod cache_api;
+mod cache_worker;
 mod health;
 mod http;
 mod testing;
@@ -24,6 +26,7 @@ use tower_http::{
 
 #[derive(Clone)]
 pub struct App {
+    cache: Arc<oas_application::cache::CacheService>,
     repo: Repository,
     providers: Providers,
     scheduler: Scheduler,
@@ -36,6 +39,7 @@ pub struct App {
 }
 #[tokio::main]
 async fn main() -> Result<()> {
+    let _ = rustls::crypto::ring::default_provider().install_default();
     if std::env::args().any(|a| a == "diagnostics") {
         let value: serde_json::Value = reqwest::Client::new()
             .get("http://127.0.0.1:8080/internal/status")
@@ -126,11 +130,15 @@ async fn main() -> Result<()> {
             * 1000,
         maximum_ms: 1_800_000,
     });
+    let cache = oas_adapters::cache::build(repo.clone()).await?;
     let app = App {
+        cache: cache.clone(),
         login: Arc::new(tokio::sync::Semaphore::new(3)),
         traces: traces.clone(),
         diagnostic_counters,
         engine: Arc::new(Engine {
+            cache: Some(cache),
+            background: false,
             transport: Arc::new(providers.clone()),
             scheduler: scheduler.clone(),
         }),
@@ -141,6 +149,7 @@ async fn main() -> Result<()> {
         origin: std::env::var("OAS_PUBLIC_ORIGIN")
             .unwrap_or_else(|_| "http://localhost:8080".into()),
     };
+    tokio::spawn(cache_worker::supervise(app.clone()));
     let check = app.clone();
     tokio::spawn(async move {
         loop {

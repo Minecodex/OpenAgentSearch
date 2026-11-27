@@ -62,6 +62,9 @@ impl Run<'_> {
     ) {
         let media = value["media_type"].as_str().unwrap_or("text/markdown");
         let mut material = json!({"material_id":id(),"call_id":call,"kind":"webpage","state":"complete","url":url,"media_type":media,"body":value["archive_body"].as_str().or(value["body"].as_str()).unwrap_or("")});
+        if value["_cache"] == true {
+            material["cache"] = value["cache"].clone();
+        }
         if let Some(source) = source {
             material["source_id"] = json!(source);
         }
@@ -105,12 +108,13 @@ impl Run<'_> {
             self.journal.lock().unwrap().materials.push(raw);
         }
     }
-    pub async fn pool(
+    pub async fn uncached_pool(
         &self,
         kind: &str,
         stage: &str,
         input: Value,
         command: &Command,
+        cache_read: Option<(&oas_domain::cache::Scope, &str, i64)>,
     ) -> Result<CallOutput> {
         let mut tried = HashSet::new();
         let mut minimum = 0;
@@ -191,10 +195,38 @@ impl Run<'_> {
                     return Ok(output);
                 }
                 Err(error) => {
+                    if kind == "reader"
+                        && let Some(observation) =
+                            oas_domain::cache::OriginObservation::from_error(&error)
+                    {
+                        if let (Some(cache), Some((scope, key, epoch))) =
+                            (&self.engine.cache, cache_read)
+                        {
+                            self.bounded(cache.record_failure(
+                                scope,
+                                key,
+                                error.details["source_url"].as_str(),
+                                &error,
+                                epoch,
+                            ))
+                            .await?;
+                        }
+                        if observation.stops_fetch()
+                            || error.details["retry_after_ms"]
+                                .as_i64()
+                                .is_some_and(|ms| ms > 0)
+                        {
+                            return Err(error);
+                        }
+                    }
                     if terminal(&error)
+                        || error.details["source_gone"] == true
                         || matches!(
                             error.code.as_str(),
-                            "ACCESS_DENIED" | "URL_NOT_ALLOWED" | "STAGE_BUDGET_EXCEEDED"
+                            "ACCESS_DENIED"
+                                | "URL_NOT_ALLOWED"
+                                | "STAGE_BUDGET_EXCEEDED"
+                                | "ORIGIN_RETRY_LATER"
                         )
                     {
                         return Err(error);
@@ -376,6 +408,7 @@ impl Run<'_> {
             });
             match self
                 .bounded(self.engine.transport.open_browser(BrowserOpen {
+                    background: self.engine.background,
                     deadline: self.total_deadline,
                     node: &node,
                     proxy: proxy.as_ref(),
@@ -508,6 +541,10 @@ impl Run<'_> {
             })
         } else {
             self.bounded(async {
+                if task == "extract" {
+                    self.check_reader_dispatch(input["url"].as_str().unwrap_or_default())
+                        .await?;
+                }
                 tokio::time::timeout(
                     remaining,
                     self.engine.transport.invoke(Invocation {

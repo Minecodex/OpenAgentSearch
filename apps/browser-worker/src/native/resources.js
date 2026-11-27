@@ -23,7 +23,12 @@ browser.webRequest.onHeadersReceived.addListener(details=>{
   if(!state.requests.has(details.requestId))return;
   const mime=details.responseHeaders?.find(h=>h.name.toLowerCase()==='content-type')?.value?.split(';')[0];
   if(state.headers.size<128)state.headers.set(details.requestId,{mime,url:details.url,status:details.statusCode});
-  if(details.type==='main_frame'&&details.requestId===state.mainRequest){state.url=details.url;state.status=details.statusCode;}
+  if(details.type==='main_frame'&&details.requestId===state.mainRequest){
+    state.url=details.url;state.status=details.statusCode;
+    const raw=details.responseHeaders?.find(h=>h.name.toLowerCase()==='retry-after')?.value?.trim();
+    const wait=raw && (/^\d+$/.test(raw) ? Number(raw)*1000 : Date.parse(raw)-Date.now());
+    state.retry_after_ms=raw && !Number.isNaN(wait) ? Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,wait)) : undefined;
+  }
 },{urls:['<all_urls>']},['blocking','responseHeaders']);
 browser.webRequest.onErrorOccurred.addListener(details=>{
   const state=pageCaptures.get(details.tabId);

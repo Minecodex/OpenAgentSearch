@@ -333,7 +333,7 @@ paths:
                   message: 上游或输出协议失败
                   details: null
         '503':
-          description: 依赖或代理不可用
+          description: 依赖或代理不可用，或源站退避尚未到期。ORIGIN_RETRY_LATER 在 error.details.retry_after_ms 返回剩余毫秒数。
           content:
             application/json:
               schema:
@@ -761,6 +761,10 @@ components:
       - title
       - snippet
       properties:
+        summary:
+          type: string
+          description: 可选长简介，原生来源直接传递，页级简介使用网页原语言。
+          x-description-en: Optional long summary supplied by the source or generated in the page original language.
         url:
           type: string
           format: uri

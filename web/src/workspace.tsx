@@ -10,6 +10,7 @@ import {
 import {
   BookOpen,
   ChartNoAxesCombined,
+  Database,
   ChevronRight,
   FlaskConical,
   Folder,
@@ -52,6 +53,7 @@ const Dashboard = lazy(() =>
 const Observability = lazy(() =>
   import("./observability").then((m) => ({ default: m.Observability })),
 );
+const CacheManagement = lazy(() => import("./cache").then(m => ({ default: m.CacheManagement })));
 const Reference = lazy(() =>
   import("./reference").then((m) => ({ default: m.Reference })),
 );
@@ -68,6 +70,7 @@ const groups: readonly {
       ["/playground", FlaskConical, "检索调试", "Playground"],
       ["/requests", List, "请求记录", "Requests"],
       ["/observability", ChartNoAxesCombined, "运行观测", "Observability"],
+      ["/cache", Database, "缓存管理", "Cache management"],
     ],
   },
   {
@@ -234,6 +237,7 @@ export function Workspace() {
               <Route path="/requests" element={<Records />} />
               <Route path="/requests/:id" element={<Trace />} />
               <Route path="/observability" element={<Observability />} />
+              <Route path="/cache" element={<CacheManagement />} />
               <Route path="/api" element={<Reference />} />
               <Route
                 path="*"

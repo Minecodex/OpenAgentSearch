@@ -1,5 +1,7 @@
 mod browser_context;
 mod browser_timing;
+pub mod cache;
+mod cache_hooks;
 mod calls;
 mod compression;
 mod cpu;
@@ -63,6 +65,7 @@ pub struct Invocation<'a> {
     pub dispatch: &'a Dispatch,
 }
 pub struct BrowserOpen<'a> {
+    pub background: bool,
     pub deadline: tokio::time::Instant,
     pub node: &'a WorkerNode,
     pub proxy: Option<&'a Value>,
@@ -76,6 +79,10 @@ pub struct BrowserOpen<'a> {
 #[async_trait]
 pub trait Transport: Send + Sync {
     async fn validate(&self, endpoint: &Endpoint) -> Result<()>;
+    /// A cached body is subject to the same destination policy as an upstream read.
+    async fn validate_read_target(&self, _url: &str) -> Result<()> {
+        Ok(())
+    }
     async fn preflight(
         &self,
         endpoint: &Endpoint,

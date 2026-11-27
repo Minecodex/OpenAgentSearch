@@ -19,12 +19,14 @@ const run=(program,args)=>new Promise((resolve,reject)=>{
 const ctlArgs=(action,timeout='3m')=>[...prefix.slice(1),action,'--namespace',namespace,'--release',release,'--chart',chart,'--values',valuesFile,'--timeout',timeout];
 const ctl=(action)=>run(prefix[0],[...ctlArgs(action),...(action==='install'?['--admin-username',initialUsername,'--admin-password-file',process.env.OASCTL_PREFIX_JSON?'/work/'+passwordFile:passwordFile]:[])]);
 const kubectl=(...args)=>run('kubectl',[...kube,'--namespace',namespace,...args]);
+// The acceptance release uses two slots per Pod, including the three-Pod scaling check.
+const browserTestResources={requests:{cpu:'250m',memory:'1Gi'},limits:{memory:'2Gi'}};
 const values={
   publicOrigin:base,
   images:process.env.OAS_TEST_IMAGES_JSON?JSON.parse(process.env.OAS_TEST_IMAGES_JSON):Object.fromEntries(['api','web','browser'].map(k=>[k,{repository:'oas/'+k,tag:'task',pullPolicy:'Never'}])),
   credentials:{adminPassword:'values-must-not-win'},postgres:{storage:'1Gi',password:'fixture:@#/?[]%Ab123'},
   api:{extraEnv:[{name:'OAS_EGRESS_ALLOW_HOSTS',value:'host.docker.internal'}]},
-  browser:{replicas:2,slots:2,extraEnv:[{name:'OAS_EGRESS_ALLOW_HOSTS',value:'host.docker.internal'},{name:'OAS_TEST_GOOGLE_ORIGIN',value:source},{name:'OAS_TEST_BAIDU_ORIGIN',value:source}]},
+  browser:{replicas:2,slots:2,resources:browserTestResources,extraEnv:[{name:'OAS_EGRESS_ALLOW_HOSTS',value:'host.docker.internal'},{name:'OAS_TEST_GOOGLE_ORIGIN',value:source},{name:'OAS_TEST_BAIDU_ORIGIN',value:source}]},
   searxng:{enabled:false,settings:{use_default_settings:{engines:{keep_only:[]}},search:{formats:['html','json']},engines:[{name:'fixture',shortcut:'fixture',engine:'json_engine',network:{enable_http:true},search_url:source+'/search?format=json&q={query}',results_query:'results',url_query:'url',title_query:'title',content_query:'content',paging:false}]}},
   crawl4ai:{enabled:false,extraEnv:[{name:'CRAWL4AI_ALLOW_INTERNAL_URLS',value:'true'}]},
 };
@@ -147,7 +149,7 @@ try{
   await upgrade();assert.equal((await business(project.api_key,'list',{query:'rainfall'})).data.items.length,1);
   values.browser.resources={requests:{cpu:'100000',memory:'512Mi'},limits:{memory:'2Gi'}};await save();
   await prove('A25.command_timeout',async()=>{const timeout=await capture(prefix[0],ctlArgs('upgrade','8s'));assert.notEqual(timeout.code,0);assert.match(timeout.text,/Helm apply\/wait stage failed/);assert.match(timeout.text,/timed out|deadline|timeout/i);});
-  values.browser.resources={requests:{cpu:'250m',memory:'512Mi'},limits:{memory:'2Gi'}};await upgrade();await capacity(2);
+  values.browser.resources=browserTestResources;await upgrade();await capacity(2);
   const inspected=await capture(prefix[0],ctlArgs('status'));check('A25.retry_inspection',()=>{assert.equal(inspected.code,0);assert.match(inspected.text,/deployed/);});
   const diagnosis=await capture(prefix[0],[...ctlArgs('doctor'),'--json']);assert.equal(diagnosis.code,0,diagnosis.text);const doctor=JSON.parse(diagnosis.text);
   check('A25.doctor_service_account',()=>{const checks=doctor.checks.filter(c=>c.check.startsWith('service-account/'));assert.equal(checks.length,3);assert.ok(checks.every(c=>c.status==='ok'));});

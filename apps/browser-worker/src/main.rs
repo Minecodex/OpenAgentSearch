@@ -26,6 +26,19 @@ use axum::{
 use chrono::Utc;
 use oas_domain::{id, worker::WorkerCommand};
 use serde_json::{Value, json};
+#[derive(Debug)]
+pub struct SourceStatus {
+    pub code: String,
+    pub status: u16,
+    pub url: String,
+    pub retry_after_ms: Option<i64>,
+}
+impl std::fmt::Display for SourceStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.code)
+    }
+}
+impl std::error::Error for SourceStatus {}
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{
     process::Command,
@@ -241,6 +254,11 @@ async fn jobs(
                 json!({})
             };
             diagnostics["phases"] = json!(trace.snapshot());
+            if let Some(source) = e.downcast_ref::<SourceStatus>() {
+                diagnostics["source_status"] = json!(source.status);
+                diagnostics["source_url"] = json!(source.url);
+                diagnostics["retry_after_ms"] = json!(source.retry_after_ms);
+            }
             let raw = e.to_string();
             let code = if raw == "CANCELLED" {
                 "CANCELLED"
@@ -429,6 +447,7 @@ async fn read_article(
         layout["reason"] = json!("layout_byte_limit");
     }
     value["layout"] = layout;
+    value["final_url"] = opened["url"].clone();
     Ok(value)
 }
 fn search_url(cmd: &WorkerCommand) -> Result<String> {

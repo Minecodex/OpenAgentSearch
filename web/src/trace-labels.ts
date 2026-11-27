@@ -1,5 +1,21 @@
 type Translate = (zh: string, en: string) => string;
 export const traceFields: Record<string, [string, string]> = {
+  verification:["缓存复核","Cache verification"],
+  reusable_score:["可复用得分","Reuse score"],
+  threshold:["放行阈值","Acceptance threshold"],
+  decisions:["候选复核结果","Candidate decisions"],
+  shortlisted_question_ids:["送审候选问题 ID","Shortlisted question IDs"],
+  label:["分类","Classification"],
+  question_id:["历史问题标识","Historical question ID"],
+  profile:["匹配器配置版本","Matcher profile"],
+  cache:["缓存来源","Cache origin"],
+  cache_lookup_id:["缓存读取标识","Cache lookup ID"],
+  lookup_id:["缓存读取标识","Cache lookup ID"],
+  snapshot_id:["缓存版本","Cache version"],
+  snapshot_ids:["采用的缓存版本","Selected cache versions"],
+  search_needed:["需要后台补搜","Background search needed"],
+  bypass:["缓存旁路","Cache bypass"],
+  hit:["缓存命中","Cache hit"],
   normalization: ["结果判定", "Result interpretation"],
   cards: ["搜索页卡片", "Search-page cards"],
   content: ["内容", "Content"],
@@ -50,6 +66,7 @@ export const traceFields: Record<string, [string, string]> = {
   max_output_tokens: ["输出词元上限", "Maximum output tokens"],
 };
 const values: Record<string, Record<string, [string, string]>> = {
+  label: {reusable:["可复用","Reusable"],insufficient:["材料不足","Insufficient evidence"],conflict:["明确冲突","Conflict"]},
   normalization: {no_relevant_passages:["全部段落无相关证据，返回空结果","No relevant passages; returned empty"]},
   answer_state: {none:["未发现","Not found"],pending:["未完成或缺少引用","Incomplete or missing citations"],ready:["已完成","Complete"]},
   return_reason: {ai_answer_ready:["AI 回答已完成并稳定","AI answer complete and stable"],material_ready:["搜索材料已就绪","Search material ready"],deadline_material:["预算到期，交付已有材料","Budget reached; returning available material"]},
@@ -57,7 +74,7 @@ const values: Record<string, Record<string, [string, string]>> = {
   mode: {whole_sources:["原文一次性总结","Single synthesis from original sources"],batched:["分批总结","Batched synthesis"]},
   time_range: {day:["最近一天","Past day"],month:["最近一月","Past month"],year:["最近一年","Past year"]},
   kind: {body:["网页正文","Article text"],snippet:["搜索简介","Search snippet"],model:["模型往返","Model exchange"],webpage:["网页归档","Archived webpage"]},
-  material: {reader_body:["网页正文","Article body"],inline_body:["搜索随附正文","Inline article"],snippet:["搜索简介回退","Snippet fallback"]},
+  material: {reader_body:["网页正文","Article body"],cache_body:["缓存正文","Cached article"],inline_body:["搜索随附正文","Inline article"],snippet:["搜索简介回退","Snippet fallback"]},
   state: {complete:["完整","Complete"],partial:["部分缺失","Partial"],missing:["未记录","Missing"],unavailable:["不可用","Unavailable"]},
   status: {success:["成功","Success"],error:["失败","Failed"],partial:["部分完成","Partial"],empty:["无结果","Empty"],running:["运行中","Running"],cancelled:["已取消","Cancelled"]},
   selection_reason: {selected:["已选中","Selected"],unscored:["未评分","Unscored"],irrelevant:["不相关","Irrelevant"],source_limit:["超出来源上限","Beyond source limit"]},

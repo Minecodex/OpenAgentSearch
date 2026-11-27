@@ -203,7 +203,7 @@ flowchart TD
 | 401 / 413 | `UNAUTHORIZED / PAYLOAD_TOO_LARGE` | 无效项目 Key 或超出输入字节限制 |
 | 429 | `RATE_LIMITED, CAPACITY_EXHAUSTED` | 入口速率或有界队列不足，可附 `Retry-After` |
 | 502 | `SEARCH_FAILED, CONTENT_UNAVAILABLE, MODEL_FAILED, QUERY_REWRITE_FAILED, ACCESS_DENIED` | 上游协议错误、正文不可用、模型不能完成、仅改写搜索无可用查询、目标明确拒绝访问 |
-| 503 / 504 / 500 | `SERVICE_UNAVAILABLE, PROXY_UNAVAILABLE / DEADLINE_EXCEEDED / INTERNAL_ERROR` | 依赖或代理不可用、总时限耗尽、未预期的错误 |
+| 503 / 504 / 500 | `SERVICE_UNAVAILABLE, PROXY_UNAVAILABLE, ORIGIN_RETRY_LATER / DEADLINE_EXCEEDED / INTERNAL_ERROR` | 依赖或代理不可用、总时限耗尽、未预期的错误 |
 
 客户端按稳定 `code` 分支，`message` 用于展示，`details` 只含公开字段。成功时 `error=null`，错误时 `data=null`。
 

@@ -9,10 +9,11 @@ export function searchDocument(engine,query,page,{empty=false}={}){
  let organic=empty||cardOnly?'':google
   ? `<div class="g"><a href="${page}"><h3>Rainfall field guide</h3></a><div class="VwiC3b">A rain gauge measures rainfall.</div></div>`
   : `<div class="result c-container" tpl="www_index" mu="${page}"><h3><a href="${page}">Rainfall field guide</a></h3><div class="c-abstract" data-module="abstract">A rain gauge measures rainfall.</div></div>`;
+ if(query.includes('plan2-'))organic=Array.from({length:10},(_,index)=>organic.replaceAll(page,page+'?cache_page='+index).replaceAll('Rainfall field guide','Rainfall source '+index)).join('');
  if(query.includes('concurrent-readers'))organic=Array.from({length:4},(_,index)=>organic.replaceAll(page,page+'?parallel_source='+index).replaceAll('Rainfall field guide','Rainfall source '+index)).join('');
  const noResults=empty?(google?'No results found':'<div class="nors">抱歉，没有找到相关结果</div>'):'';
- const region=google?`<main id="rcnt"><div id="search"><div id="rso">${organic}${noResults}</div><div id="card-zone"></div></div></main>`
-  : `<div id="content_left">${organic}${noResults}<div id="card-zone"></div></div><div id="content_right"></div>`;
+ const region=google?`<main id="rcnt"><div id="search"><div id="rso">${organic}${noResults}</div><div id="card-zone"></div><div id="answer-zone"></div></div></main>`
+  : `<div id="content_left">${organic}${noResults}<div id="card-zone"></div><div id="answer-zone"></div></div><div id="content_right"></div>`;
  if(query.includes('hydrating-search')){
   const content=`<form action="${path}"><input ${google?'':'id="kw"'} name="${name}" value="${escaped(query)}"><button type="submit" ${google?'':'id="su"'}>Search</button></form>${region}`;
   return `<html><head><meta charset="utf-8"></head><body>${script(`setTimeout(()=>document.body.insertAdjacentHTML('beforeend',${JSON.stringify(content)}),1000);`)}</body></html>`;
@@ -33,8 +34,8 @@ export function searchDocument(engine,query,page,{empty=false}={}){
   const baiduBlock=`<div tpl="wenda_generate" class="c-container" ${marker}><div class="${never||fragment?'wenda-generating':'wenda-general-finished'}"><div class="cosd-markdown-content">${answer}${never||fragment?'<div data-complete="true">Fragment complete</div><p>内容由AI生成</p>':''}</div></div></div>`;
   const pending=google?'<section data-scope-id="turn" data-complete="false"><h2>AI Overview</h2><div data-container-id="main-col" aria-busy="true">正在搜索…</div></section>'
    :'<div tpl="wenda_generate" class="c-container" data-complete="false"><div><div class="cosd-markdown-content" aria-busy="true">正在搜索…</div></div></div>';
-  if(only)dynamic+=script(`setTimeout(()=>document.querySelector('#card-zone').innerHTML=${JSON.stringify(pending)},100);`);
-  dynamic+=script(`setTimeout(()=>{document.querySelector('#card-zone').innerHTML=${JSON.stringify(google?googleBlock:baiduBlock)};
+  if(only)dynamic+=script(`setTimeout(()=>document.querySelector('#answer-zone').innerHTML=${JSON.stringify(pending)},100);`);
+  dynamic+=script(`setTimeout(()=>{document.querySelector('#answer-zone').innerHTML=${JSON.stringify(google?googleBlock:baiduBlock)};
    ${popup&&!google?`
     document.body.insertAdjacentHTML('beforeend','<div class="cosd-citation-tooltip"><a class="cosd-citation-title" href="https://example.org/stale-source">Old unrelated tooltip</a></div>');
     let clicks=0;document.querySelector('span.cosd-citation').onclick=()=>{

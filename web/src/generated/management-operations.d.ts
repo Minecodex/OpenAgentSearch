@@ -1280,4 +1280,250 @@ export interface operations {
             };
         };
     };
+    cacheOverview: {
+        parameters: {
+            query?: {
+                project?: string;
+                origin?: string;
+                operation?: string;
+                since?: number;
+                until?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheOverview"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    cacheTasks: {
+        parameters: {
+            query?: {
+                project?: string;
+                origin?: string;
+                operation?: string;
+                since?: number;
+                until?: number;
+                state?: string;
+                kind?: string;
+                cursor?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheTasks"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    cacheTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheTask"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    getCacheConcurrency: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheConcurrencyView"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    putCacheConcurrency: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: components["parameters"]["SameOriginHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CacheConcurrencyWrite"];
+            };
+        };
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheConcurrencyView"];
+                    };
+                };
+            };
+            409: components["responses"]["Failure"];
+            default: components["responses"]["Failure"];
+        };
+    };
+    getCachePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CachePolicyView"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    putCachePolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: components["parameters"]["SameOriginHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CachePolicyWrite"];
+            };
+        };
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CachePolicyView"];
+                    };
+                };
+            };
+            409: components["responses"]["Failure"];
+            default: components["responses"]["Failure"];
+        };
+    };
+    getCacheModelBudget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheModelBudgetView"];
+                    };
+                };
+            };
+            default: components["responses"]["Failure"];
+        };
+    };
+    putCacheModelBudget: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: components["parameters"]["SameOriginHeader"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CacheModelBudgetWrite"];
+            };
+        };
+        responses: {
+            /** @description 缓存管理结果。 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEnvelope"] & {
+                        data?: components["schemas"]["CacheModelBudgetView"];
+                    };
+                };
+            };
+            409: components["responses"]["Failure"];
+            default: components["responses"]["Failure"];
+        };
+    };
 }

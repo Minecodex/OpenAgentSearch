@@ -20,16 +20,18 @@ impl Run<'_> {
         search: bool,
     ) -> Result<(WorkerNode, Option<Value>, Option<Value>, Lease)> {
         let queued = Instant::now();
+        let _foreground = self.engine.scheduler.browser_waiter(self.engine.background);
         loop {
             if self.browser_blocked.load(Ordering::SeqCst) {
                 return Err(oas_runtime::proxy_error());
             }
             let excluded = self.excluded_proxies.lock().unwrap().clone();
-            match self
-                .engine
-                .scheduler
-                .browser_excluding(self.snapshot, search, &excluded)
-            {
+            match self.engine.scheduler.browser_excluding_class(
+                self.snapshot,
+                search,
+                &excluded,
+                self.engine.background,
+            ) {
                 Ok(allocation) => return Ok(allocation),
                 Err(error) if error.code == "CAPACITY_EXHAUSTED" => {
                     // A sibling owns a real lease and will release it on completion.

@@ -99,7 +99,7 @@ flowchart LR
 
 `tests/native-browser.integration.mjs` 直接验证真实 Firefox 扩展与 Rust Native Messaging 通道，包括两个页面环境的 `webdriver=false`、隐藏及禁用搜索控件与实际输入框并存、Unicode 查询、HTTP 拒绝状态、静态资源归档与挑战失败。`browser-reaping.integration.mjs` 验证取消后直接启动的 Firefox、Native Host 及其子进程均被回收，后台失败刷新也不遗留进程。
 
-已有本地集群时，`node tests/helm.mjs` 验证真实安装、升级和故障重试；`tests/kubernetes-local.mjs` 提供单节点 Docker Desktop 环境的镜像导入、命令行工具准备和回收封装。该封装使用显式选中的集群及专用命名空间，不修改其他应用。完成 Docker 与 Kubernetes 两套运行后，`node tests/acceptance/report.mjs` 逐条检查 [272 个验收子项](./13-acceptance-subitems.md)，并核对当前源码、两套完整运行与测试镜像的 SHA-256 指纹，再生成索引。测试标题和旧版汇总报告不能替代断言证据。运行证据、截图、延迟与质量 JSON 均写入忽略提交的 `artifacts/`，项目文档不保存部署或验收流水。
+已有本地集群时，`node tests/helm.mjs` 验证真实安装、升级和故障重试；`tests/kubernetes-local.mjs` 提供单节点 Docker Desktop 环境的镜像导入、命令行工具准备和回收封装。该封装使用显式选中的集群及专用命名空间，不修改其他应用。完成 Docker 与 Kubernetes 两套运行后，`node tests/acceptance/report.mjs` 逐条检查 [Plan 1 验收子项](./13-acceptance-subitems.md) 和 [Plan 2 缓存验收](../plan2/README.md#与现有架构的衔接及验收)，并核对当前源码、两套完整运行与测试镜像的 SHA-256 指纹，再生成索引。测试标题和旧版汇总报告不能替代断言证据。运行证据、截图、延迟与质量 JSON 均写入忽略提交的 `artifacts/`，项目文档不保存部署或验收流水。
 
 质量基线使用确定性的模型协议夹具，报告输入长度、并发、P50/P95、错误率、排队、实际用量、引用有效性及材料覆盖，并在替换模型标识后重测。它验证流水线和证据约束；生产模型的事实能力及付费服务的在线兼容性需要部署方使用实际凭据另行评测。
 

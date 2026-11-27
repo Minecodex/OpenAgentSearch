@@ -62,19 +62,33 @@ impl Scheduler {
         request: &str,
         cancel: &CancellationToken,
     ) -> Result<Lease> {
+        self.model_permit_class(e, request, cancel, false).await
+    }
+    pub async fn model_permit_class(
+        &self,
+        e: &Endpoint,
+        request: &str,
+        cancel: &CancellationToken,
+        background: bool,
+    ) -> Result<Lease> {
+        let queue_key = if background {
+            format!("{}:background", e.id)
+        } else {
+            e.id.clone()
+        };
         let ticket = {
             let mut s = self.state.lock().unwrap();
             s.sequence += 1;
             let t = s.sequence;
             s.model_queues
-                .entry(e.id.clone())
+                .entry(queue_key.clone())
                 .or_default()
                 .push(request, t);
             t
         };
         let mut waiting = Waiting {
             state: self.state.clone(),
-            endpoint: e.id.clone(),
+            endpoint: queue_key.clone(),
             request: request.into(),
             ticket,
             granted: false,
@@ -88,15 +102,40 @@ impl Scheduler {
                 let mut s = self.state.lock().unwrap();
                 let turn = s
                     .model_queues
-                    .get(&e.id)
+                    .get(&queue_key)
                     .is_some_and(|q| q.turn(request, ticket));
-                if turn && has_room(&mut s, &e.id, e.max_concurrency, e.rpm, self.clock.millis()) {
+                let bg_key = format!("cache:model:{}", e.id);
+                let foreground = s
+                    .model_queues
+                    .get(&e.id)
+                    .is_some_and(|q| !q.order.is_empty());
+                let (limit, rpm) = (
+                    s.cache_model_limit.max(1),
+                    if s.cache_model_rpm == 0 {
+                        10
+                    } else {
+                        s.cache_model_rpm
+                    },
+                );
+                let bg_room = !background
+                    || (!foreground && has_room(&mut s, &bg_key, limit, rpm, self.clock.millis()));
+                if turn
+                    && bg_room
+                    && has_room(&mut s, &e.id, e.max_concurrency, e.rpm, self.clock.millis())
+                {
                     s.model_queues
-                        .get_mut(&e.id)
+                        .get_mut(&queue_key)
                         .unwrap()
                         .remove(request, ticket, true);
                     waiting.granted = true;
-                    return self.endpoint_locked(&mut s, e);
+                    let mut lease = self.endpoint_locked(&mut s, e)?;
+                    if background {
+                        take(&mut s, &bg_key);
+                        *s.reserved.entry(bg_key.clone()).or_default() += 1;
+                        lease.keys.push(bg_key.clone());
+                        lease.background_rate = Some(bg_key);
+                    }
+                    return Ok(lease);
                 }
             }
             if tokio::time::Instant::now() >= deadline {

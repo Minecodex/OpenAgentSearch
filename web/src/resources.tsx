@@ -2,6 +2,7 @@ import { OverflowText } from "./overflow-text";
 import { languageOptions } from "./search-languages";
 import { ResourceInventory } from "./resource-inventory";
 import { CopyButton } from "./copy-button";
+import { HotPolicyFields } from "./cache-policy";
 import { LanguagePicker } from "./language-picker";
 import { SearchBox } from "./filter-controls";
 import { ProbeDetails, SearchAttempts } from "./call-details";
@@ -95,6 +96,8 @@ function defaults(kind: string): Entity {
       search_original_query: true,
       summary_snippets_only: false,
       allow_snippets: false,
+      cache_enabled: false,
+      cache_policy: { list: null, content: null },
     };
   if (kind === "proxies")
     return {
@@ -360,6 +363,7 @@ export function Resources({ kind }: { kind: string }) {
                       ? t("搜索列表", "Search results")
                       : t("网页正文", "Page content"),
                   ],
+                  [t("搜索缓存", "Search cache"), e.cache_enabled ? t("已开启", "Enabled") : t("已关闭", "Disabled")],
                   [
                     t("浏览器出口", "Browser egress"),
                     e.browser_proxy_pool_id
@@ -709,6 +713,8 @@ function Detail({
     search_original_query: t("原问题参与搜索", "Search original query"),
     summary_snippets_only: t("直接使用搜索列表总结", "Summarize search results only"),
     allow_snippets: t("允许简介回退", "Allow snippet fallback"),
+    cache_enabled: t("启用搜索缓存", "Enable search cache"),
+    cache_policy: t("缓存热点策略", "Cache hotness policy"),
     has_secret: t("已配置凭据", "Credential configured"),
     default_network_google_probe: t(
       "共享默认网络 Google 检测",
@@ -728,7 +734,7 @@ function Detail({
     <Dialog title={e.name} layout="wide" close={close}>
       <Facts
         items={Object.entries(e)
-          .filter(([k]) => k !== "last_test")
+          .filter(([k]) => !["last_test", "cache_epoch", "cache_access_epoch"].includes(k))
           .map(([k, v]) => [labels[k] || k, human(k, v)])}
       />
       {(usedBy.length > 0 ||
@@ -804,6 +810,7 @@ function ResourceEditor({
     [action, setAction] = useState("keep");
   const set = (key: string, value: any) =>
     setDraft((d) => ({ ...d, [key]: value }));
+  const cacheDefaults = useQuery({ queryKey: ["cache-settings", "policy"], queryFn: () => api<Entity>("/admin/v1/settings/cache-policy"), enabled: kind === "projects" && !!draft.cache_enabled });
   const options = (key: string, value: any) =>
     setDraft((d) => ({ ...d, options: { ...d.options, [key]: value } }));
   const save = useMutation({
@@ -812,6 +819,8 @@ function ResourceEditor({
       for (const k of [
         "id",
         "version",
+        "cache_epoch",
+        "cache_access_epoch",
         "managed_by",
         "availability",
         "has_secret",
@@ -1006,6 +1015,16 @@ function ResourceEditor({
                   {t("普通取文失败时允许使用简介", "Allow snippets after ordinary extraction failure")}
                 </Checkbox.Content>
               </Checkbox>
+              <h3 className="form-section">{t("缓存设置", "Cache settings")}</h3>
+              <Switch isSelected={draft.cache_enabled ?? false} onChange={value => set("cache_enabled", value)}>
+                <Switch.Content><Switch.Control><Switch.Thumb /></Switch.Control><Label>{t("启用搜索缓存", "Enable search cache")}</Label></Switch.Content>
+                <Description>{t("复用搜索列表和正文。开启后，仅对选中页面按需补齐，后台取文与简介可能额外调用浏览器和模型。", "Reuse search lists and page content. Selected pages are filled on demand; background fetching and summaries may add browser and model calls.")}</Description>
+              </Switch>
+              <Notice error={draft.cache_enabled ? cacheDefaults.error : null} />
+              {(["list", "content"] as const).map(cacheKind => <HotPolicyFields key={cacheKind}
+                title={cacheKind === "list" ? t("列表热点策略", "List hotness policy") : t("正文热点策略", "Content hotness policy")}
+                value={draft.cache_policy?.[cacheKind]} defaults={cacheDefaults.data?.[cacheKind]}
+                disabled={!draft.cache_enabled} change={value => set("cache_policy", { ...draft.cache_policy, [cacheKind]: value })} />)}
             </>
           ) : kind === "endpoints" ? (
             <>

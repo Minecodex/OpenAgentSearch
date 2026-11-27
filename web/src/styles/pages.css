@@ -88,6 +88,13 @@
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
 }
+.filter-panel .cache-filter-grid {
+  align-items: end;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(max-content, 1fr);
+}
+@media (max-width: 1050px) {
+  .filter-panel .cache-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .filter-panel .field {
   gap: 5px;
 }
@@ -831,4 +838,8 @@
 }
 .test-receipt .probe-details {
   width: 100%;
+}
+
+@media (max-width: 550px) {
+  .filter-panel .cache-filter-grid { grid-template-columns: minmax(0, 1fr); }
 }
