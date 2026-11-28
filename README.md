@@ -10,7 +10,7 @@
 
 **为 AI 应用和 Agent 提供网页检索、正文提取与带引用的回答。**
 
-[控制台](#atlas-控制台) · [业务 API](#业务-api) · [快速部署](#快速部署) · [本地开发与测试](#本地开发与测试) · [文档](docs/README.md)
+[控制台](#atlas-控制台) · [业务 API](#业务-api) · [搜索缓存](#搜索缓存) · [快速部署](#快速部署) · [本地开发与测试](#本地开发与测试) · [文档](docs/README.md)
 
 </div>
 
@@ -61,6 +61,30 @@ curl -sS http://localhost:8080/v1/search/list \
 
 `language` 指定搜索路由及总结语言，`Accept-Language` 选择错误和警告的语言。参数范围、响应示例和错误码见[业务 API 指南](docs/plan1/02-business-api.md)和[业务 OpenAPI](docs/plan1/contracts/business.openapi.yaml)。
 
+## 搜索缓存
+
+缓存按项目启用，默认关闭。开启后，三个业务 API 沿用原有参数。`/v1/search/list` 可复用历史搜索结果，`/v1/search/content` 可按 URL 复用完整正文。`/v1/search/summary` 可复用列表、正文和页级简介，再围绕本次问题评分、选材并生成带引用的回答。[启用步骤](#启用搜索缓存)
+
+原问和每个实际执行的改写查询分别查缓存。只有当前项目有权使用、仍在有效期内，且语言、地区和时间等条件相容的列表快照才参与复用。
+
+| 列表检索命中情况 | 本次如何处理 |
+| --- | --- |
+| 仅命中原问 | 复用该问句的有效快照，候选网页去重、排序后交付。 |
+| 命中两个或更多合格的历史问题 | 选取其中两个，合并候选网页后去重、排序。 |
+| 仅命中一个近义问题 | 先使用它的候选网页，后台再用内置浏览器搜索本次问句。 |
+| 没有合格快照 | 按项目配置的搜索池实时检索，符合条件的结果写入缓存。 |
+
+列表缓存查找默认限时 **2 秒**。超时或依赖故障时，系统会在剩余预算内尝试读取原问的有效快照，无法复用时按项目路由实时搜索。
+
+列表快照的默认有效期是 **30 分钟**，完整正文是 **6 小时**，均从实际采集时间起算。普通列表至少取得 5 个不同的有效页面才入库，即使本次只要求返回 1 条，也按原始结果判断。带有效引用的完整引擎 AI 回答可单独入库。正文缺失或过期时按项目路由取文，后台按需为返回或选用的网页补齐正文和简介。[快照准入规则](docs/plan2/README.md#admission)
+
+近义问题有两种匹配策略。
+
+- **`v1`（默认）** 用 BM25 和向量召回候选，按余弦相似度筛选近义问题，默认阈值为 `0.92`。
+- **`v2`** 融合两路排名，再由独立匹配器判断已有网页能否回答本次问题。材料被判为可复用、得分达到该语言经审计的阈值才会近义命中。尚无合格阈值的语言只允许精确复用。[复核与语言校准](docs/plan2/06-verified-reuse.md)
+
+在 Atlas 的 **缓存管理** 查看库存、列表和正文命中率、后台补搜及热点刷新任务。要核实某次命中，打开 **请求记录 → 执行过程 → 缓存检索**，可以按原问或改写查看命中来源、采集时间、网页标题、网址和简介。[控制台与指标口径](docs/plan2/03-cache-console.md)
+
 ## 快速部署
 
 准备一个有可用 StorageClass 的 Kubernetes 集群，以及已配置 kubeconfig 的 `kubectl` 和 Helm 3。应用镜像面向 `linux/amd64` 节点。
@@ -98,6 +122,29 @@ browser:
 
 可分别设置 `searxng.enabled` 和 `crawl4ai.enabled` 启用配套搜索或正文服务。通过 `oasctl upgrade` 应用变更，使用与安装时相同的命名空间和 release 名称，并传入目标 Chart 和 values。私有仓库可覆盖 `images.api`、`images.web`、`images.browser` 的仓库与标签。[完整配置](deploy/helm/openagentsearch/values.yaml) · [安装、升级与诊断](docs/plan1/12-oasctl-and-helm.md)
 
+### 启用搜索缓存
+
+Helm 默认关闭缓存。可用 `helm show values <chart>` 确认发行包包含 `cache` 配置，再选择配套镜像。使用 `oasctl` 从源码部署时，将 `--chart` 指向 `./deploy/helm/openagentsearch`，并让 `images.api`、`images.web`、`images.browser` 指向同一源码版本构建的镜像。[应用镜像构建文件](deploy/Dockerfile)
+
+准备一个兼容 `POST /v1/embeddings` 的向量服务，与项目用于总结的生成模型分开配置。将以下示例合入 `site-values.yaml`，用实际的服务地址、模型名、输出维度和模型版本替换示例值。启用后，Chart 默认部署带持久卷的 Qdrant、Valkey 和 SeaweedFS，也支持连接已有服务。
+
+```yaml
+cache:
+  enabled: true
+  handler: v1
+  embedding:
+    baseUrl: http://embedding:8080/v1
+    model: multilingual-e5-small
+    dimensions: 384
+    version: "1"
+```
+
+向量服务需要鉴权时，通过 `cache.embedding.existingSecret` 和 `cache.embedding.secretKey` 引用 Kubernetes Secret。如果从缺少 `cache` 配置的旧 Chart 升级，使用 `helm upgrade` 的 `--reset-then-reuse-values` 和 `--values site-values.yaml` 合并新默认值与站点配置。[配置与外部依赖](docs/plan2/05-runtime.md)
+
+使用 `v2` 时，将 `cache.handler` 设为 `v2`，在 `cache.matcher.profile` 中填写校准配置的 SHA-256 指纹。外部匹配器使用 `cache.matcher.url` 指定完整的 `/v1/cache/match` 地址。由 Chart 部署匹配器时，启用 `cache.matcher.enabled`，在 `cache.matcher.image` 中指定镜像，并通过 `cache.matcher.existingClaim` 只读挂载预置模型及配置的 PVC。切换策略版本会启用新的缓存空间。[匹配器部署](docs/plan2/06-verified-reuse.md#运行与版本切换)
+
+应用配置后，在 Atlas 的 **项目 → 创建或编辑项目 → 缓存设置** 中打开 **启用搜索缓存** 并保存。新请求随即采用该项目的设置。后台补搜、补正文及生成页级简介会使用浏览器或模型配额，可在 **缓存管理** 调整后台并发。
+
 ## 架构与镜像
 
 | 组件 | 职责 | 镜像 |
@@ -105,11 +152,12 @@ browser:
 | Rust API | 业务与管理接口、项目鉴权、路由调度、引用生成和请求历史 | [kakj/openagentsearch-api](https://hub.docker.com/r/kakj/openagentsearch-api) |
 | Atlas Web | React、TypeScript 与 HeroUI 控制台，Nginx 将 API 请求转发到同源后端 | [kakj/openagentsearch-web](https://hub.docker.com/r/kakj/openagentsearch-web) |
 | Firefox 执行器 | 执行内置搜索、加载网页正文，支持按项目分配 SOCKS5 或 HTTPS 代理 | [kakj/openagentsearch-browser](https://hub.docker.com/r/kakj/openagentsearch-browser) |
-| PostgreSQL | 保存项目配置、加密凭据、请求证据和统计，使用持久卷 | Chart 配置的 PostgreSQL 镜像 |
+| PostgreSQL | 使用持久卷保存项目配置、加密凭据、请求证据、统计、缓存快照和后台任务 | Chart 配置的 PostgreSQL 镜像 |
+| 缓存存储（可选） | Qdrant 检索历史问题，Valkey 保存热点计数的副本，S3 兼容对象存储保存网页正文 | Chart 可部署 Qdrant、Valkey 和 SeaweedFS |
+| 缓存向量服务 | 将查询和候选网页编码为向量，用于召回和排序 | 部署方提供兼容 `/v1/embeddings` 的服务 |
+| v2 缓存匹配器（可选） | 复核历史网页材料，按语言阈值判断能否复用 | [匹配器 Dockerfile](apps/cache-matcher/Dockerfile) |
 
 ## 本地开发与测试
-
-搜索缓存支持 Qdrant 混合召回、S3 正文、双热点续期和独立后台队列。项目创建/编辑时开启“启用搜索缓存”，在“缓存管理”查看库存、命中与任务消费，并调整后台并发及热点策略。v2 支持 BM25 与向量名次融合、双语材料复核和按语言校准。embedding、判断器和存储通过环境变量或 Helm 配置，详情见 [Plan 2 配置与验证](docs/plan2/05-runtime.md)。
 
 源码开发使用 Rust 1.97、Node.js 24 和 PostgreSQL 18。在运行环境中设置数据库连接、64 位十六进制主密钥和独立的执行器令牌。使用 Vite 时将 `OAS_PUBLIC_ORIGIN` 设为 `http://localhost:5173`，前端将 API 请求转发至 `127.0.0.1:8080`。[环境变量模板](.env.example)
 
@@ -140,6 +188,7 @@ Docker 端到端套件启动独立的 PostgreSQL、API、Web 和 Firefox，使�
 | --- | --- |
 | 服务边界与部署拓扑 | [系统架构](docs/plan1/01-system.md) · [文档索引](docs/README.md) |
 | 检索、评分和引用 | [搜索与内容流水线](docs/plan1/03-search-pipeline.md) |
+| 搜索缓存与后台任务 | [缓存主流程](docs/plan2/README.md) · [运行配置](docs/plan2/05-runtime.md) · [缓存管理](docs/plan2/03-cache-console.md) |
 | 服务商、路由和浏览器 | [路由与接入点](docs/plan1/04-routing-and-providers.md) · [浏览器与代理池](docs/plan1/07-browser-proxies.md) |
 | 配置、请求历史与回放 | [控制面与存储](docs/plan1/05-control-and-storage.md) · [运行观测](docs/plan1/06-observability.md) · [管理 OpenAPI](docs/plan1/contracts/management.openapi.yaml) |
 
